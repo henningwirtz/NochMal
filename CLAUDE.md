@@ -20,6 +20,12 @@ ES-Module brauchen einen HTTP-Server (kein `file://`):
 Beide Startskripte fahren den Server hoch und öffnen den Browser; sie bevorzugen Python
 und fallen auf Node (`npx serve`) zurück.
 
+**Wichtig (Caching):** Die Startskripte nutzen `serve.py` – einen kleinen HTTP-Server,
+der `Cache-Control: no-store` sendet. So zeigt der Browser nach jedem Update sofort die
+neue Version. Falls doch mal Altes erscheint: einmal hart neu laden (Strg/Cmd+Shift+R).
+Im Setup zeigt ein kleiner „Stand: …"-Hinweis (`#build-badge`, `VERSION` in `main.js`),
+welche Version geladen ist – nach Änderungen die `VERSION` hochsetzen.
+
 ## Tests
 
 ```

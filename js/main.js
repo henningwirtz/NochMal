@@ -14,6 +14,11 @@ validateBoard();
 
 const $ = (id) => document.getElementById(id);
 
+// Versionsanzeige - hilft zu erkennen, ob die aktuelle (ungecachte) Version laeuft.
+const VERSION = '2026-06-18 · KI-Tempo, Hell/Dunkel, Sound';
+const buildBadge = $('build-badge');
+if (buildBadge) buildBadge.textContent = `Stand: ${VERSION}`;
+
 const playerCountSel = $('player-count');
 const slotsContainer = $('player-slots');
 const startBtn = $('start-btn');

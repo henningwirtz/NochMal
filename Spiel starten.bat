@@ -11,7 +11,8 @@ start "" cmd /c "timeout /t 1 >nul & start http://localhost:%PORT%/"
 
 where python >nul 2>nul
 if %errorlevel%==0 (
-  python -m http.server %PORT%
+  REM No-Cache-Server bevorzugen, damit Updates sofort sichtbar sind.
+  python serve.py
   goto :eof
 )
 

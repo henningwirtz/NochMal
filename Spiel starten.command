@@ -11,7 +11,8 @@ echo "Dieses Fenster offen lassen - Schliessen beendet den Server."
 ( sleep 1; open "http://localhost:$PORT/" ) &
 
 if command -v python3 >/dev/null 2>&1; then
-  exec python3 -m http.server "$PORT"
+  # No-Cache-Server bevorzugen, damit Updates sofort sichtbar sind.
+  exec python3 serve.py
 elif command -v npx >/dev/null 2>&1; then
   exec npx --yes serve -l "$PORT"
 else
