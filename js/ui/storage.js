@@ -8,6 +8,7 @@
 
 const SCORES_KEY = 'nochmal.scores.v1';
 const SETTINGS_KEY = 'nochmal.settings.v1';
+const PREFS_KEY = 'nochmal.prefs.v1';
 const MAX_SCORES = 50;
 
 function readJSON(key, fallback) {
@@ -50,4 +51,13 @@ export function loadSettings() {
 
 export function saveSettings(settings) {
   writeJSON(SETTINGS_KEY, settings);
+}
+
+// --- Globale Präferenzen (Theme, Ton) - sofort beim Umschalten gespeichert ---
+export function loadPrefs() {
+  return readJSON(PREFS_KEY, {});
+}
+
+export function savePrefs(prefs) {
+  writeJSON(PREFS_KEY, { ...loadPrefs(), ...prefs });
 }

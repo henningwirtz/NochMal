@@ -7,6 +7,7 @@
 import { renderSheet } from './boardView.js';
 import { humanTurn } from './controls.js';
 import { recordResults } from './storage.js';
+import { playRoll, playMark, playEnd } from './sound.js';
 import { chooseMove } from '../core/ai.js';
 import {
   COLOR_LABEL,
@@ -46,6 +47,7 @@ export async function runGame(game, dom) {
           announce(dom, res.timedOut ? `${player.name}: Zeit abgelaufen – gepasst.` : `${player.name} passt.`);
         } else {
           game.submitChoice(idx, res.choice);
+          playMark();
           announce(dom, `${player.name}: ${describeMove(res.choice)}`);
         }
       } else {
@@ -65,15 +67,16 @@ export async function runGame(game, dom) {
 
 async function aiTurn(game, idx, dom) {
   const player = game.players[idx];
+  const spd = game.aiSpeed || 1; // Tempo-Faktor (>1 langsamer, <1 schneller)
   setStatus(dom, `${player.name} (KI) überlegt …`);
   renderDiceStatic(dom, game, idx);
-  await delay(1100);
+  await delay(1100 * spd);
 
   const move = chooseMove(player.sheet, game.availablePool(idx), game.aiDifficulty);
   if (!move) {
     game.submitPass(idx);
     announce(dom, `${player.name} (KI) passt.`);
-    await delay(900);
+    await delay(900 * spd);
     return;
   }
 
@@ -83,9 +86,9 @@ async function aiTurn(game, idx, dom) {
   for (const [r, c] of move.cells) {
     selected.add(`${r},${c}`);
     renderBoards(dom, game, { chooserIdx: idx, focusIdx: idx, selected: new Set(selected) });
-    await delay(550);
+    await delay(550 * spd);
   }
-  await delay(550);
+  await delay(550 * spd);
 
   // 2) Auswahl gemeinsam ankreuzen und kurz markiert stehen lassen.
   game.submitChoice(idx, {
@@ -95,10 +98,11 @@ async function aiTurn(game, idx, dom) {
     count: move.count,
     cells: move.cells,
   });
+  playMark();
   announce(dom, `${player.name} (KI): ${describeMove(move)}`);
   const highlight = new Set(move.cells.map(([r, c]) => `${r},${c}`));
   renderBoards(dom, game, { chooserIdx: idx, focusIdx: idx, highlight });
-  await delay(950);
+  await delay(950 * spd);
   renderBoards(dom, game, { chooserIdx: idx });
 }
 
@@ -126,6 +130,7 @@ async function runSolo(game, dom) {
         announce(dom, res.timedOut ? `Wurf ${rolls}: Zeit abgelaufen – gepasst.` : `Wurf ${rolls}: gepasst.`);
       } else {
         game.submitChoice(0, res.choice);
+        playMark();
         announce(dom, `Wurf ${rolls}: ${describeMove(res.choice)}`);
       }
     } else {
@@ -190,6 +195,7 @@ function renderBoards(dom, game, opts = {}) {
 // Kurze Wuerfelanimation: einige Frames mit zufaelligen Augen, dann die echten
 // (bereits in beginRound gewuerfelten) Wuerfel.
 async function animateRoll(dom, game, chooserIdx) {
+  playRoll();
   for (let i = 0; i < 7; i++) {
     renderDiceRolling(dom, game);
     await delay(80);
@@ -342,6 +348,7 @@ function showEnd(dom, game, solo = false) {
   // Spiel-Bildschirm bleibt sichtbar: Endwertung erscheint ueber den Bloecken,
   // die ihren Endstand weiter anzeigen.
   setStatus(dom, 'Spiel beendet');
+  playEnd();
   dom.turnInfo.textContent = '';
   if (dom.moveTimer) { dom.moveTimer.classList.add('hidden'); dom.moveTimer.textContent = ''; }
   dom.diceTray.replaceChildren();

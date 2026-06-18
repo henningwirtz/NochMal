@@ -6,7 +6,8 @@
 import { Game } from './core/game.js';
 import { runGame } from './ui/flow.js';
 import { validateBoard } from './data/board.js';
-import { getScores, clearScores, loadSettings, saveSettings } from './ui/storage.js';
+import { getScores, clearScores, loadSettings, saveSettings, loadPrefs, savePrefs } from './ui/storage.js';
+import { setMuted } from './ui/sound.js';
 
 // Spielplan beim Laden validieren (wirft bei Inkonsistenzen).
 validateBoard();
@@ -34,9 +35,35 @@ if (saved) {
   }
   if (saved.count) playerCountSel.value = String(saved.count);
   if (saved.difficulty) $('ai-difficulty').value = saved.difficulty;
+  if (saved.aiSpeed) $('ai-speed').value = String(saved.aiSpeed);
   if (saved.timerOn) $('timer-on').checked = true;
   if (saved.timerSeconds) $('timer-seconds').value = String(saved.timerSeconds);
 }
+
+// --- Hell/Dunkel-Theme und Ton (global, sofort gespeichert) ----------------
+const prefs = loadPrefs();
+const themeBtn = $('theme-toggle');
+const muteBtn = $('mute-toggle');
+function applyTheme(light) {
+  document.body.classList.toggle('light', light);
+  themeBtn.textContent = light ? '☀️' : '🌙';
+}
+function applyMute(muted) {
+  setMuted(muted);
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+}
+applyTheme(prefs.theme === 'light');
+applyMute(!!prefs.muted);
+themeBtn.addEventListener('click', () => {
+  const light = !document.body.classList.contains('light');
+  applyTheme(light);
+  savePrefs({ theme: light ? 'light' : 'dark' });
+});
+muteBtn.addEventListener('click', () => {
+  const muted = muteBtn.textContent === '🔊';
+  applyMute(muted);
+  savePrefs({ muted });
+});
 
 function renderSlots() {
   const count = parseInt(playerCountSel.value, 10);
@@ -142,6 +169,7 @@ startBtn.addEventListener('click', () => {
   }));
   const soloMode = count === 1;
   const aiDifficulty = $('ai-difficulty').value;
+  const aiSpeed = parseFloat($('ai-speed').value) || 1;
   const timerOn = $('timer-on').checked;
   const timerSeconds = Math.max(5, parseInt($('timer-seconds').value, 10) || 30);
   const moveTimer = timerOn ? timerSeconds : 0;
@@ -150,12 +178,13 @@ startBtn.addEventListener('click', () => {
   saveSettings({
     count,
     difficulty: aiDifficulty,
+    aiSpeed,
     timerOn,
     timerSeconds,
     slots: slots.slice(0, count).map((s) => ({ name: s.name, isHuman: s.isHuman })),
   });
 
-  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer });
+  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed });
 
   $('setup-screen').classList.add('hidden');
   dom.endPanel.classList.add('hidden');

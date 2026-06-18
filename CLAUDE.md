@@ -46,11 +46,13 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   `flow.js` (`runGame`/`renderBoards` = alle Spieler-Blöcke gleichzeitig, KI-Züge,
   Log/Ansagen, inline Endwertung), `controls.js` (`humanTurn` = interaktiver Zug,
   nur eigener Block anklickbar; Rückgängig-Button + optionaler Zug-Timer),
-  `storage.js` (localStorage: Bestenliste `recordResults`/`getScores` und Setup-
-  Einstellungen `loadSettings`/`saveSettings`).
+  `storage.js` (localStorage: Bestenliste `recordResults`/`getScores`, Setup-
+  Einstellungen `loadSettings`/`saveSettings`, globale Präferenzen
+  `loadPrefs`/`savePrefs`), `sound.js` (WebAudio-Effekte: `playRoll`/`playMark`/
+  `playEnd`, `setMuted`/`isMuted` – keine externen Audiodateien).
 - `js/main.js` – Setup-Bildschirm & Bootstrap; `backToSetup()` für „Neues Spiel";
-  rendert die Bestenliste und stellt zuletzt genutzte Einstellungen wieder her.
-  `index.html`, `css/styles.css`.
+  rendert die Bestenliste, stellt zuletzt genutzte Einstellungen wieder her und
+  steuert Hell/Dunkel-Theme + Ton (oben rechts). `index.html`, `css/styles.css`.
 
 ### Konventionen
 - Farbcodes im Raster: `y`=gelb, `n`=grün, `b`=blau, `r`=rot/pink, `o`=orange.
@@ -68,5 +70,8 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 - Das Log (`#log`) trennt jeden Wurf mit einem `▶`-Marker (`announceRound`).
 - Optionaler Zug-Timer: `game.moveTimer` (Sekunden, 0 = aus); läuft je Mensch-Zug in
   `controls.js`, bei Ablauf wird automatisch gepasst (`{ action:'pass', timedOut:true }`).
-- Setup merkt sich Spielernamen, Anzahl, KI-Stärke und Timer (localStorage).
+- KI-Tempo: `game.aiSpeed` (Faktor auf die Pausen in `aiTurn`; >1 langsamer, <1 schneller).
+- Hell/Dunkel: `body.light` überschreibt die CSS-Variablen; Theme + Mute liegen in
+  `prefs` (localStorage) und werden sofort beim Umschalten gespeichert.
+- Setup merkt sich Spielernamen, Anzahl, KI-Stärke, KI-Tempo und Timer (localStorage).
 - Code-Kommentare und UI-Texte sind auf Deutsch.

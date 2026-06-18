@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <div id="top-controls">
+    <button id="theme-toggle" class="icon-btn" title="Hell/Dunkel umschalten" aria-label="Hell/Dunkel umschalten">🌙</button>
+    <button id="mute-toggle" class="icon-btn" title="Ton an/aus" aria-label="Ton an/aus">🔊</button>
+  </div>
+
   <!-- ===================== Setup ===================== -->
   <section id="setup-screen" class="screen">
     <h1 class="logo">NOCH MAL!</h1>
@@ -33,6 +38,16 @@
           <option value="leicht">Leicht</option>
           <option value="mittel" selected>Mittel</option>
           <option value="schwer">Schwer</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>KI-Tempo</span>
+        <select id="ai-speed">
+          <option value="1.7">Langsam</option>
+          <option value="1" selected>Normal</option>
+          <option value="0.55">Schnell</option>
+          <option value="0.28">Sehr schnell</option>
         </select>
       </label>
 

@@ -309,3 +309,21 @@ button.die:not(.disabled):hover { transform: translateY(-2px); box-shadow: 0 4px
 .lb-table th { color: var(--muted); font-weight: 700; }
 .lb-table td strong { color: var(--accent); }
 .lb-empty { color: var(--muted); margin: 8px 0 0; }
+
+/* ---------- Steuer-Buttons (Theme / Ton) ---------- */
+#top-controls { position: fixed; top: 10px; right: 12px; display: flex; gap: 8px; z-index: 50; }
+.icon-btn {
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink);
+  border-radius: 8px; width: 40px; height: 40px; font-size: 1.15rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s, transform .1s;
+}
+.icon-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+/* ---------- Hell-Theme ---------- */
+body.light {
+  --bg: #eef2f7; --panel: #ffffff; --panel-2: #e7edf4; --ink: #16212e;
+  --muted: #566678; --accent: #d9760a; --line: #c9d5e2;
+}
+body.light { background: radial-gradient(1100px 560px at 50% -8%, #dde7f3 0%, var(--bg) 58%) fixed; }
+body.light .message { color: #9a6b00; }
