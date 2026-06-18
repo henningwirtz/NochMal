@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>NOCH MAL! – Tests</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f1722; color: #eef3f9; padding: 24px; }
+    h1 { color: #f08a1d; }
+    .ok { color: #7cc043; }
+    .fail { color: #e6357f; }
+    li { margin: 4px 0; }
+    .summary { font-size: 1.2rem; margin: 12px 0; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>NOCH MAL! – Regel- & Wertungstests</h1>
+  <div id="summary" class="summary"></div>
+  <ul id="results"></ul>
+  <script type="module">
+    import { runTests } from './js/tests/testsuite.js';
+    const results = runTests();
+    const ul = document.getElementById('results');
+    let passed = 0;
+    for (const r of results) {
+      const li = document.createElement('li');
+      if (r.ok) { passed++; li.className = 'ok'; li.textContent = `✓ ${r.name}`; }
+      else { li.className = 'fail'; li.textContent = `✗ ${r.name} — ${r.error}`; }
+      ul.appendChild(li);
+    }
+    const sum = document.getElementById('summary');
+    sum.textContent = `${passed}/${results.length} Tests bestanden`;
+    sum.className = 'summary ' + (passed === results.length ? 'ok' : 'fail');
+  </script>
+</body>
+</html>

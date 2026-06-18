@@ -1,0 +1,11 @@
+{
+  "name": "nochmal",
+  "version": "1.0.0",
+  "description": "Browser-Nachbau des Wuerfelspiels NOCH MAL! (Schmidt Spiele)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node js/tests/node-runner.mjs",
+    "start": "python -m http.server 8000"
+  }
+}

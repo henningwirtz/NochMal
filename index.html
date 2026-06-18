@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOCH MAL!</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ===================== Setup ===================== -->
+  <section id="setup-screen" class="screen">
+    <h1 class="logo">NOCH MAL!</h1>
+    <p class="subtitle">Das geniale Würfelspiel – Nachbau für den Browser</p>
+
+    <div class="setup-card">
+      <label class="field">
+        <span>Anzahl Spieler</span>
+        <select id="player-count">
+          <option value="1">1 (Solo)</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+        </select>
+      </label>
+
+      <div id="player-slots"></div>
+
+      <button id="start-btn" class="primary big">Spiel starten</button>
+    </div>
+
+    <details class="rules">
+      <summary>Kurzregeln</summary>
+      <ul>
+        <li>Der aktive Spieler würfelt alle 6 Würfel und nimmt 1 Farb- + 1 Zahlenwürfel.
+            Die anderen wählen aus den 4 übrigen Würfeln (in den ersten 3 Würfen aus allen 6).</li>
+        <li>Kreuze so viele zusammenhängende Felder der Farbe an, wie die Zahl zeigt –
+            benachbart zu bereits Angekreuztem oder in der Startspalte H beginnend.</li>
+        <li>Schwarzer Würfel = beliebige Farbe, „?" = Zahl 1–5. Jeder Joker streicht ein „!"-Feld (max. 8).</li>
+        <li>Volle Spalte = Punkte (erster Spieler mehr). Komplette Farbe = Bonus (5 / sonst 3).</li>
+        <li>Spielende: sobald jemand 2 komplette Farben hat. Offene Sterne = −2 je Stück, übrige „!" = +1.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- ===================== Spiel ===================== -->
+  <section id="game-screen" class="screen hidden">
+    <header class="game-header">
+      <div id="status-bar" class="status-bar"></div>
+      <div id="turn-info" class="turn-info"></div>
+    </header>
+
+    <div id="dice-tray" class="dice-tray"></div>
+    <div id="action-bar" class="action-bar"></div>
+    <div id="message" class="message"></div>
+
+    <div class="game-main">
+      <div id="board-container" class="board-container"></div>
+      <aside class="sidebar">
+        <h3>Punktestand</h3>
+        <div id="scoreboard" class="scoreboard"></div>
+        <h3>Ansagen</h3>
+        <div id="log" class="log"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===================== Ende ===================== -->
+  <section id="end-screen" class="screen hidden">
+    <h2>Endwertung</h2>
+    <div id="end-content"></div>
+    <button id="restart-btn" class="primary big">Neues Spiel</button>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
