@@ -42,6 +42,21 @@ h1, h2, h3 { margin: 0.2em 0; }
 .build-badge { display: inline-block; margin-left: 6px; font-size: 0.7rem; color: var(--muted); opacity: 0.7; }
 
 /* ---------- Setup ---------- */
+/* Modus-Auswahl auf der Startseite: zwei große Karten nebeneinander. */
+.mode-select { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; max-width: 480px; }
+.mode-card {
+  flex: 1 1 200px;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--panel); color: var(--ink);
+  border: 2px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; cursor: pointer; text-align: left;
+}
+.mode-card.active { border-color: var(--accent); background: var(--panel-2); }
+.mode-card .mode-title { font-weight: 800; font-size: 1.05rem; }
+.mode-card .mode-sub { color: var(--muted); font-size: 0.85rem; }
+/* Im Notizblock-Modus die KI-/Mehrspieler-Felder ausblenden. */
+body.mode-notepad .mode-a-only { display: none; }
+
 .setup-card {
   background: var(--panel);
   border: 1px solid var(--line);

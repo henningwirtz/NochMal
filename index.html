@@ -27,8 +27,19 @@
     <p class="subtitle">Das geniale Würfelspiel – Nachbau für den Browser
       <span id="build-badge" class="build-badge"></span></p>
 
+    <div id="mode-select" class="mode-select">
+      <button type="button" class="mode-card active" data-mode="a">
+        <span class="mode-title">🤖 Gegen die KI</span>
+        <span class="mode-sub">Ein Gerät · mit KI-Gegnern</span>
+      </button>
+      <button type="button" class="mode-card" data-mode="b">
+        <span class="mode-title">📝 Digitaler Notizblock</span>
+        <span class="mode-sub">Eigenes Handy · frei ankreuzen</span>
+      </button>
+    </div>
+
     <div class="setup-card">
-      <label class="field">
+      <label class="field mode-a-only">
         <span>Anzahl Spieler</span>
         <select id="player-count">
           <option value="1">1 (Solo)</option>
@@ -42,7 +53,7 @@
 
       <div id="player-slots"></div>
 
-      <label class="field">
+      <label class="field mode-a-only">
         <span>KI-Schwierigkeit</span>
         <select id="ai-difficulty">
           <option value="leicht">Leicht</option>
@@ -51,7 +62,7 @@
         </select>
       </label>
 
-      <label class="field">
+      <label class="field mode-a-only">
         <span>KI-Tempo</span>
         <select id="ai-speed">
           <option value="1.7">Langsam</option>
@@ -61,7 +72,7 @@
         </select>
       </label>
 
-      <div class="field">
+      <div class="field mode-a-only">
         <span>Zug-Timer (optional)</span>
         <div class="timer-row">
           <label class="check"><input type="checkbox" id="timer-on" /> aktiv</label>

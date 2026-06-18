@@ -4,8 +4,8 @@
 // gefuehrte Feldauswahl und Bestaetigen/Passen.
 // ============================================================================
 
-import { COLOR_ORDER, COLOR_HEX, COLOR_LABEL, JOKER } from '../core/constants.js';
-import { legalPlacements } from '../core/rules.js';
+import { COLOR_ORDER, COLOR_HEX, COLOR_LABEL, JOKER, GRID_ROWS, GRID_COLS } from '../core/constants.js';
+import { legalPlacements, isRelaxedPlacement } from '../core/rules.js';
 
 const key = (r, c) => `${r},${c}`;
 const sameSet = (cells, set) => cells.length === set.size && cells.every(([r, c]) => set.has(key(r, c)));
@@ -101,6 +101,28 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
     }
 
     function onCellClick(r, c) {
+      // Notizblock-Modus: Farbe/Anzahl egal - jedes erreichbare Feld frei ankreuzen.
+      if (game.relaxed) {
+        const k = key(r, c);
+        const idx = state.selected.findIndex(([rr, cc]) => key(rr, cc) === k);
+        if (idx >= 0) {
+          state.selected.splice(idx, 1); // erneutes Antippen entfernt das Feld
+          setHint('');
+          redraw();
+          return;
+        }
+        if (sheet.isMarked(r, c)) return;
+        const tentative = [...state.selected, [r, c]];
+        if (!isRelaxedPlacement(sheet, tentative)) {
+          setHint('Nur erreichbare Felder: Startspalte H oder direkt neben einem Kreuz.');
+          return;
+        }
+        state.selected.push([r, c]);
+        setHint('');
+        redraw();
+        return;
+      }
+
       const color = effColor();
       const count = effCount();
       if (!color || !count) {
@@ -127,7 +149,79 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       redraw();
     }
 
+    // Notizblock-Modus: Würfel nur als Referenz, freies Ankreuzen erreichbarer Felder.
+    function redrawRelaxed() {
+      // --- Würfel read-only anzeigen (man würfelt real am Tisch) ------------
+      dom.diceTray.replaceChildren();
+      const colorGroup = document.createElement('div');
+      colorGroup.className = 'dice-group';
+      colorGroup.append(label('Farbwürfel'));
+      for (const die of game.dice.colorDice) colorGroup.append(refDie(die, true));
+      const numberGroup = document.createElement('div');
+      numberGroup.className = 'dice-group';
+      numberGroup.append(label('Zahlenwürfel'));
+      for (const die of game.dice.numberDice) numberGroup.append(refDie(die, false));
+      dom.diceTray.append(colorGroup, numberGroup);
+
+      // --- Board: erreichbare Felder hervorheben ---------------------------
+      const selectedSet = new Set(state.selected.map(([r, c]) => key(r, c)));
+      const highlight = new Set();
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          if (sheet.isMarked(r, c) || selectedSet.has(key(r, c))) continue;
+          if (isRelaxedPlacement(sheet, [...state.selected, [r, c]])) highlight.add(key(r, c));
+        }
+      }
+      renderBoards({
+        chooserIdx: playerIndex,
+        focusIdx: playerIndex,
+        interactive: true,
+        highlight,
+        selected: selectedSet,
+        onCellClick,
+      });
+
+      // --- Aktionsleiste (Bestätigen, Passen, Rückgängig) ------------------
+      dom.actionBar.replaceChildren();
+      const confirm = button('Bestätigen', () => {
+        finish({ action: 'choice', choice: { cells: state.selected } });
+      });
+      confirm.disabled = state.selected.length === 0;
+      confirm.classList.add('primary');
+
+      const pass = button('Passen', () => finish({ action: 'pass' }));
+      pass.classList.add('pass');
+
+      const undo = button('↶ Rückgängig', () => {
+        if (state.selected.length) {
+          state.selected.pop();
+          setHint('');
+          redraw();
+        }
+      });
+      undo.disabled = state.selected.length === 0;
+
+      dom.actionBar.append(confirm, pass, undo);
+    }
+
+    // Nicht anklickbarer Würfel nur zur Anzeige des aktuellen Wurfs.
+    function refDie(die, isColor) {
+      const chip = document.createElement('span');
+      chip.className = isColor ? 'die color-die' : 'die number-die';
+      if (die.face === JOKER) {
+        chip.classList.add('joker');
+        chip.textContent = isColor ? '✻' : '?';
+      } else if (isColor) {
+        chip.style.background = COLOR_HEX[die.face];
+        chip.title = COLOR_LABEL[die.face];
+      } else {
+        chip.textContent = die.face;
+      }
+      return chip;
+    }
+
     function redraw() {
+      if (game.relaxed) { redrawRelaxed(); return; }
       // --- Wuerfeltablett ---------------------------------------------------
       dom.diceTray.replaceChildren();
 

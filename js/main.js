@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 const $ = (id) => document.getElementById(id);
 
 // Versionsanzeige - hilft zu erkennen, ob die aktuelle (ungecachte) Version laeuft.
-const VERSION = '2026-06-18 · Querformat: Steuerspalte + Würfeln-Button';
+const VERSION = '2026-06-18 · Modus-Auswahl: KI / Notizblock';
 const buildBadge = $('build-badge');
 if (buildBadge) buildBadge.textContent = `Stand: ${VERSION}`;
 
@@ -38,6 +38,9 @@ function defaultSlot(i) {
 }
 for (let i = 0; i < 6; i++) slots.push(defaultSlot(i));
 
+// Spielmodus: 'a' = Gegen die KI (ein Gerät), 'b' = Digitaler Notizblock (eigenes Handy).
+let currentMode = 'a';
+
 // Zuletzt verwendete Einstellungen wiederherstellen (Namen, Anzahl, KI, Timer).
 const saved = loadSettings();
 if (saved) {
@@ -51,6 +54,7 @@ if (saved) {
   if (saved.aiSpeed) $('ai-speed').value = String(saved.aiSpeed);
   if (saved.timerOn) $('timer-on').checked = true;
   if (saved.timerSeconds) $('timer-seconds').value = String(saved.timerSeconds);
+  if (saved.mode === 'b') currentMode = 'b';
 }
 
 // --- Hell/Dunkel-Theme und Ton (global, sofort gespeichert) ----------------
@@ -79,7 +83,9 @@ muteBtn.addEventListener('click', () => {
 });
 
 function renderSlots() {
-  const count = parseInt(playerCountSel.value, 10);
+  // Im Notizblock-Modus gibt es nur einen Spieler (eigenes Handy) - nur ein
+  // Namensfeld, kein Mensch/KI-Umschalter.
+  const count = currentMode === 'b' ? 1 : parseInt(playerCountSel.value, 10);
   slotsContainer.replaceChildren();
   for (let i = 0; i < count; i++) {
     const slot = slots[i];
@@ -91,29 +97,46 @@ function renderSlots() {
     name.value = slot.name;
     name.className = 'slot-name';
     name.addEventListener('input', () => { slot.name = name.value; });
+    row.append(name);
 
-    const toggle = document.createElement('div');
-    toggle.className = 'toggle';
-    const human = document.createElement('button');
-    human.textContent = 'Mensch';
-    const ai = document.createElement('button');
-    ai.textContent = 'KI';
-    const refresh = () => {
-      human.classList.toggle('active', slot.isHuman);
-      ai.classList.toggle('active', !slot.isHuman);
-    };
-    human.addEventListener('click', () => { slot.isHuman = true; refresh(); });
-    ai.addEventListener('click', () => { slot.isHuman = false; refresh(); });
-    refresh();
-    toggle.append(human, ai);
+    if (currentMode === 'a') {
+      const toggle = document.createElement('div');
+      toggle.className = 'toggle';
+      const human = document.createElement('button');
+      human.textContent = 'Mensch';
+      const ai = document.createElement('button');
+      ai.textContent = 'KI';
+      const refresh = () => {
+        human.classList.toggle('active', slot.isHuman);
+        ai.classList.toggle('active', !slot.isHuman);
+      };
+      human.addEventListener('click', () => { slot.isHuman = true; refresh(); });
+      ai.addEventListener('click', () => { slot.isHuman = false; refresh(); });
+      refresh();
+      toggle.append(human, ai);
+      row.append(toggle);
+    }
 
-    row.append(name, toggle);
     slotsContainer.append(row);
   }
 }
 
+// Modus umschalten: Karten-Hervorhebung, KI-Felder ein-/ausblenden, Slots neu.
+function applyMode(mode) {
+  currentMode = mode === 'b' ? 'b' : 'a';
+  document.body.classList.toggle('mode-notepad', currentMode === 'b');
+  document.querySelectorAll('.mode-card').forEach((card) => {
+    card.classList.toggle('active', card.dataset.mode === currentMode);
+  });
+  renderSlots();
+}
+
+document.querySelectorAll('.mode-card').forEach((card) => {
+  card.addEventListener('click', () => applyMode(card.dataset.mode));
+});
+
 playerCountSel.addEventListener('change', renderSlots);
-renderSlots();
+applyMode(currentMode);
 
 // --- Bestenliste -----------------------------------------------------------
 const DIFF_LABEL = { leicht: 'Leicht', mittel: 'Mittel', schwer: 'Schwer' };
@@ -143,7 +166,7 @@ function renderLeaderboard() {
   const tbody = document.createElement('tbody');
   scores.slice(0, 10).forEach((e, i) => {
     const tr = document.createElement('tr');
-    const mode = e.solo ? 'Solo' : (DIFF_LABEL[e.difficulty] || '–');
+    const mode = e.notepad ? 'Notizblock' : (e.solo ? 'Solo' : (DIFF_LABEL[e.difficulty] || '–'));
     const date = new Date(e.date).toLocaleDateString('de-DE');
     tr.innerHTML =
       `<td>${i + 1}</td>` +
@@ -228,29 +251,43 @@ $('end-game-btn').addEventListener('click', () => {
 });
 
 startBtn.addEventListener('click', () => {
-  const count = parseInt(playerCountSel.value, 10);
-  const configs = slots.slice(0, count).map((s, i) => ({
-    name: (s.name || '').trim() || `Spieler ${i + 1}`,
-    isHuman: s.isHuman,
-  }));
-  const soloMode = count === 1;
+  const notepad = currentMode === 'b';
   const aiDifficulty = $('ai-difficulty').value;
   const aiSpeed = parseFloat($('ai-speed').value) || 1;
   const timerOn = $('timer-on').checked;
   const timerSeconds = Math.max(5, parseInt($('timer-seconds').value, 10) || 30);
-  const moveTimer = timerOn ? timerSeconds : 0;
+
+  let configs, count, soloMode, moveTimer, relaxed;
+  if (notepad) {
+    // Notizblock: genau ein Spieler, keine KI, lockere Validierung, kein Timer.
+    count = 1;
+    configs = [{ name: (slots[0].name || '').trim() || 'Du', isHuman: true }];
+    soloMode = false;
+    moveTimer = 0;
+    relaxed = true;
+  } else {
+    count = parseInt(playerCountSel.value, 10);
+    configs = slots.slice(0, count).map((s, i) => ({
+      name: (s.name || '').trim() || `Spieler ${i + 1}`,
+      isHuman: s.isHuman,
+    }));
+    soloMode = count === 1;
+    moveTimer = timerOn ? timerSeconds : 0;
+    relaxed = false;
+  }
 
   // Einstellungen für das nächste Mal merken.
   saveSettings({
-    count,
+    mode: currentMode,
+    count: parseInt(playerCountSel.value, 10),
     difficulty: aiDifficulty,
     aiSpeed,
     timerOn,
     timerSeconds,
-    slots: slots.slice(0, count).map((s) => ({ name: s.name, isHuman: s.isHuman })),
+    slots: slots.map((s) => ({ name: s.name, isHuman: s.isHuman })),
   });
 
-  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed });
+  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed, relaxed });
 
   $('setup-screen').classList.add('hidden');
   dom.endPanel.classList.add('hidden');

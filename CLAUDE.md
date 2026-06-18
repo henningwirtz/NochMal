@@ -29,6 +29,18 @@ Erledigte Punkte hier als `[x]` markieren bzw. nach unten/„Erledigt" verschieb
 - **KI-Spielzüge optimieren** – bessere Heuristik in `chooseMove`. → `ai.js`.
 
 ### Spielregeln / Varianten
+- [x] **Modus-Auswahl beim Start** – auf der Startseite (oben im Setup) zwei Modus-Karten
+  (`.mode-select`/`.mode-card`, `index.html`): **A „Gegen die KI (Ein Gerät)"** = das
+  normale Spiel (KI-Gegner, alle Boards, strenge Validierung) und **B „Digitaler
+  Notizblock (Eigenes Handy)"** = ein einzelnes eigenes Board, keine KI, **lockere**
+  Validierung. Modus B ist ein 1-Spieler-Spiel (`relaxed:true`, **kein** `soloMode`):
+  weiter würfeln + normale Wertung/Spielende/Bestenliste (Label „Notizblock"), aber jedes
+  **erreichbare** Feld (Startspalte H oder neben einem Kreuz) frei ankreuzbar – Farbe und
+  Anzahl egal. KI-/Mehrspieler-Setup-Felder tragen `mode-a-only` und werden via
+  `body.mode-notepad` ausgeblendet; der Modus wird in `saveSettings({ mode })` gemerkt.
+  → `main.js` (`applyMode`, Start-Verzweigung, `renderSlots`), `game.js`
+  (`relaxed`-Flag + `submitMarks`), `rules.js` (`isRelaxedPlacement`), `controls.js`
+  (`redrawRelaxed`/freies `onCellClick`), `flow.js` (`submitMarks`-Zweig, `notepad`-Flag).
 - **Neue Blöcke (auswählbar)** – mehrere Spielpläne (offizielle Varianten + eigene),
   im Setup wählbar; Engine ist datengetrieben. → `board.js` (mehrere `RAW_GRID`/`STARS`),
   `main.js` (Auswahl im Setup), `storage.js` (Auswahl merken).
@@ -153,8 +165,10 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   Originalblock übertragen. `validateBoard()` prüft die Struktur beim Laden. Spielplan
   ändern = nur diese Datei anpassen.
 - `js/core/` – reine Logik, DOM-frei: `constants.js` (Farben, Würfel, Wertungstabellen),
-  `dice.js`, `rules.js` (legale Platzierungen), `sheet.js` (ein Spielblatt + Wertung),
-  `game.js` (Rundenautomat; Option `aiDifficulty`), `ai.js` (Heuristik-KI,
+  `dice.js`, `rules.js` (legale Platzierungen; `isRelaxedPlacement` für den Notizblock-
+  Modus), `sheet.js` (ein Spielblatt + Wertung),
+  `game.js` (Rundenautomat; Optionen `aiDifficulty`, `relaxed`; `submitMarks` kreuzt im
+  Notizblock-Modus frei erreichbare Felder ohne Würfel-Prüfung an), `ai.js` (Heuristik-KI,
   `chooseMove(sheet, pool, difficulty)`; Stufen `leicht`/`mittel`/`schwer` über `CFG`,
   die die strategische Gewichtung skalieren).
 - `js/ui/` – Rendering & Ablauf: `boardView.js` (`renderSheet` = ein Blatt),

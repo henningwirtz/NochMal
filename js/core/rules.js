@@ -139,3 +139,16 @@ export function isValidPlacement(sheet, color, count, cells) {
 export function hasLegalPlacement(sheet, color, count) {
   return legalPlacements(sheet, color, count).length > 0;
 }
+
+// Lockere Pruefung fuer den Notizblock-Modus: beliebige unmarkierte Felder (Farbe und
+// Anzahl egal), solange sie zusammenhaengen und an Startspalte/bestehendes Kreuz andocken.
+export function isRelaxedPlacement(sheet, cells) {
+  if (!Array.isArray(cells) || cells.length < 1) return false;
+  const keys = new Set(cells.map(([r, c]) => key(r, c)));
+  if (keys.size !== cells.length) return false; // keine Duplikate
+  for (const [r, c] of cells) {
+    if (!inBounds(r, c)) return false;
+    if (sheet.isMarked(r, c)) return false;
+  }
+  return isConnected(cells) && isAnchored(sheet, cells);
+}

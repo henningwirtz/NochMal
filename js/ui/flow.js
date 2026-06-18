@@ -60,6 +60,11 @@ export async function runGame(game, dom) {
         if (res.action === 'pass') {
           game.submitPass(idx);
           announce(dom, res.timedOut ? `${player.name}: Zeit abgelaufen – gepasst.` : `${player.name} passt.`);
+        } else if (game.relaxed) {
+          // Notizblock: frei gewählte Felder ohne Würfel-/Farb-/Anzahl-Prüfung.
+          game.submitMarks(idx, res.choice.cells);
+          playMark();
+          announce(dom, `${player.name}: ${res.choice.cells.length} Feld(er) angekreuzt.`);
         } else {
           game.submitChoice(idx, res.choice);
           playMark();
@@ -415,6 +420,7 @@ function showEnd(dom, game, solo = false) {
     name: r.player.name,
     score: r.total,
     solo,
+    notepad: !!game.relaxed,
     difficulty: game.aiDifficulty,
     isHuman: r.player.isHuman,
     date: now,

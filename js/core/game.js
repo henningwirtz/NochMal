@@ -22,10 +22,10 @@ import {
 } from './constants.js';
 import { rollAll } from './dice.js';
 import { Sheet } from './sheet.js';
-import { isValidPlacement } from './rules.js';
+import { isValidPlacement, isRelaxedPlacement } from './rules.js';
 
 export class Game {
-  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1 } = {}) {
+  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1, relaxed = false } = {}) {
     // playerConfigs: [{ name, isHuman }]
     this.players = playerConfigs.map((p, i) => ({
       id: i,
@@ -34,6 +34,7 @@ export class Game {
       sheet: new Sheet(),
     }));
     this.soloMode = soloMode;
+    this.relaxed = relaxed;     // Notizblock-Modus: lockere Validierung (Farbe/Anzahl egal)
     this.aiDifficulty = aiDifficulty;
     this.moveTimer = moveTimer; // Sekunden je Mensch-Zug (0 = aus)
     this.aiSpeed = aiSpeed;     // Faktor auf KI-Pausen (1 = normal, >1 langsamer)
@@ -156,6 +157,21 @@ export class Game {
       this.removedColorId = colorId;
       this.removedNumberId = numberId;
     }
+    this._advance();
+  }
+
+  // Notizblock-Modus: kreuzt frei gewaehlte, regelkonform erreichbare Felder an -
+  // ohne Wuerfel-/Farb-/Anzahl-Pruefung (man wuerfelt real am Tisch). Wertung und
+  // Spielende laufen anschliessend unveraendert ueber resolveRound.
+  submitMarks(playerIndex, cells) {
+    if (this.currentChooserIndex() !== playerIndex) {
+      throw new Error('Dieser Spieler ist gerade nicht am Zug');
+    }
+    const player = this.players[playerIndex];
+    if (!isRelaxedPlacement(player.sheet, cells)) {
+      throw new Error('Ungueltige Platzierung');
+    }
+    player.sheet.mark(cells);
     this._advance();
   }
 
