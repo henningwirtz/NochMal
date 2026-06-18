@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 const $ = (id) => document.getElementById(id);
 
 // Versionsanzeige - hilft zu erkennen, ob die aktuelle (ungecachte) Version laeuft.
-const VERSION = '2026-06-18 · Querformat: Blöcke flach';
+const VERSION = '2026-06-18 · Querformat: Steuerspalte + Würfeln-Button';
 const buildBadge = $('build-badge');
 if (buildBadge) buildBadge.textContent = `Stand: ${VERSION}`;
 
@@ -206,9 +206,11 @@ const dom = {
   turnInfo: $('turn-info'),
   moveTimer: $('move-timer'),
   diceTray: $('dice-tray'),
+  rollBtn: $('roll-btn'),
   actionBar: $('action-bar'),
   boardContainer: $('board-container'),
   message: $('message'),
+  commentary: $('commentary'),
   scoreboard: $('scoreboard'),
   log: $('log'),
   gameScreen: $('game-screen'),

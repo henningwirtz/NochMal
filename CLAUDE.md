@@ -53,21 +53,38 @@ Erledigte Punkte hier als `[x]` markieren bzw. nach unten/„Erledigt" verschieb
     `overflow:visible; width:auto`, kein scrollbares Block-Fenster mehr, das das
     Wertungs-Panel abschnitt). Neben dem Raster nur **Farb-Bonus + Joker** (kompakt,
     voll sichtbar); die Punkte-Aufschlüsselung (`.totals`) ist im Querformat
-    ausgeblendet – Gesamtpunkte stehen im Block-Kopf und in der Punktestand-Spalte.
+    ausgeblendet – Gesamtpunkte stehen im Block-Kopf und im Header-Chip.
     `--cell: clamp(13px, min((100vw−480px)/15, (100dvh−96px)/9), 26px)` so bemessen,
     dass Raster + Panel garantiert in die Board-Spalte und Höhe passen.
     (**Hochformat noch offen.**)
+  - [x] *Aufgeräumte Steuerspalte rechts* – das Landscape-Grid hat rechts feste
+    Zeilen `dice / roll / actions / comment`: Würfel-Anzeige → neuer **🎲 Würfeln**-
+    Button (`#roll-btn`) → Aktionen als Stapel in Reihenfolge **Bestätigen, Passen,
+    Rückgängig** (`.action-bar { flex-direction: column }`) → flache **Kommentar-Box**
+    (`#commentary`, `.commentary-box`) für Systemhinweise/letzte Ansage. Die separate
+    Punktestand/Log-Spalte (`.sidebar`) und `#message` sind im Querformat
+    ausgeblendet; Würfeln-Button + Kommentar-Box sind global `display:none` und nur im
+    Landscape sichtbar. (**Hochformat noch offen.**)
+  - [x] *Würfeln-Button funktional* – beim Mensch-Aktivspieler deckt `waitForRoll`
+    (in `flow.js`) das bereits in `beginRound()` gewürfelte Ergebnis erst nach Klick
+    auf „Würfeln" per `animateRoll` auf; bei KI-Aktivspieler wird wie bisher direkt
+    gewürfelt. `control.cancel` löst das Warten bei „Spiel beenden" sauber auf.
+  - [x] *Textballast entfernt* – kein „… ist am Zug (aktiv)" mehr; `setTurnInfo`
+    schreibt stattdessen einen kompakten Punktestand-Chip (`#turn-info`) in den
+    schmalen Header oben rechts (Punktestand + Spiel beenden + Ton + Nachtmodus).
   - [x] *Alle wichtigen Buttons gleichzeitig sichtbar & bedienbar* – im Querformat
     bleiben Hell/Dunkel + Ton (`#top-controls`) fix oben rechts, der Header-Inhalt
     inkl. „Spiel beenden" rutscht via `padding-right` darunter weg → kollisionsfrei,
     gut tappbar. (**Hochformat noch zu prüfen.**)
-  - [x] *Kein Scrollen für Aktionen* – Würfel, Aktionsleiste, Steuer-Buttons und
-    Block liegen im Landscape-Grid gleichzeitig sichtbar; nur das Log scrollt in
-    der Sidebar. (**Hochformat noch offen.**)
-  → `styles.css` (Media Queries `orientation: landscape` + `max-width`/`max-height`,
-  `#top-controls`, `.game-header`, `.end-game-btn`, `.action-bar`), `index.html`
-  (Anordnung `#top-controls` / `#end-game-btn` im `game-header`), ggf. `main.js`
-  (Buttons im Spiel-Header bündeln).
+  - [x] *Kein Scrollen für Aktionen* – Würfel, Würfeln-Button, Aktionsleiste und
+    Block liegen im Landscape-Grid gleichzeitig sichtbar; nur die Kommentar-Box
+    scrollt bei Bedarf. (**Hochformat noch offen.**)
+  → `styles.css` (Media Query `orientation: landscape`, Grid-Areas
+  `board/header/dice/roll/actions/comment`, `.roll-btn`, `.commentary-box`,
+  `.turn-info`-Chip), `index.html` (`#roll-btn`, `#commentary`), `flow.js`
+  (`waitForRoll`, `setTurnInfo`, `announce` → Kommentar-Box), `controls.js`
+  (Aktions-Reihenfolge, `setHint` schreibt in `#message` + `#commentary`), `main.js`
+  (DOM-Refs `rollBtn`/`commentary`).
 - **Spieler-Stammliste mit Bildern/Emojis** – gespeicherte Liste bekannter Spieler
   (z.B. „Henning") mit fest zugewiesenem Bild/Emoji; im Setup auswählbar statt jedes Mal
   neu zu tippen, runden­übergreifend wiederverwendet. Avatar erscheint in Setup, Spiel
@@ -95,6 +112,11 @@ Erledigte Punkte hier als `[x]` markieren bzw. nach unten/„Erledigt" verschieb
 
 **Nach jeder Änderung wird diese `CLAUDE.md` aktualisiert und der Fortschritt direkt
 auf den `main`-Branch committet und gepusht – keine neuen Branches anlegen.**
+
+**Pläne aus dem Plan Mode sollen verständlich und nachvollziehbar sein** – in klarer,
+einfacher Sprache erklärt, sodass auch ohne tiefe Programmierkenntnisse erkennbar ist,
+was passiert. Wenn Code im Plan steht, dann möglichst nur einfacher, leicht lesbarer
+Code (keine komplizierten Konstrukte).
 
 ## Starten
 

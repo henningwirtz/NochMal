@@ -57,12 +57,19 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       });
     }
 
+    // Systemhinweis setzen: erscheint im #message-Bereich (Hochformat) und in der
+    // Kommentar-Box (Querformat), damit der Hinweis in beiden Layouts sichtbar ist.
+    function setHint(text) {
+      dom.message.textContent = text;
+      if (dom.commentary) dom.commentary.textContent = text;
+    }
+
     function finish(result) {
       stopTimer();
       control.cancel = null;
       dom.diceTray.replaceChildren();
       dom.actionBar.replaceChildren();
-      dom.message.textContent = '';
+      setHint('');
       resolve(result);
     }
 
@@ -97,7 +104,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       const color = effColor();
       const count = effCount();
       if (!color || !count) {
-        dom.message.textContent = 'Bitte zuerst einen Farb- und einen Zahlenwürfel wählen.';
+        setHint('Bitte zuerst einen Farb- und einen Zahlenwürfel wählen.');
         return;
       }
       const k = key(r, c);
@@ -112,7 +119,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
           return tentative.every(([rr, cc]) => set.has(key(rr, cc)));
         });
         if (!ok) {
-          dom.message.textContent = 'Dieses Feld ergibt keine gültige Platzierung.';
+          setHint('Dieses Feld ergibt keine gültige Platzierung.');
           return;
         }
         state.selected.push([r, c]);
@@ -192,30 +199,21 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       const undo = button('↶ Rückgängig', () => {
         if (state.selected.length) {
           state.selected.pop();
-          dom.message.textContent = '';
+          setHint('');
           redraw();
         }
       });
       undo.disabled = state.selected.length === 0;
 
-      const reset = button('Auswahl zurücksetzen', () => {
-        state.colorId = null;
-        state.numberId = null;
-        state.jokerColor = null;
-        state.jokerCount = null;
-        state.selected = [];
-        dom.message.textContent = '';
-        redraw();
-      });
-
       const pass = button('Passen', () => finish({ action: 'pass' }));
       pass.classList.add('pass');
 
-      dom.actionBar.append(confirm, undo, reset, pass);
+      // Reihenfolge fuer die Daumen-Ergonomie: Bestaetigen, Passen, Rueckgaengig.
+      dom.actionBar.append(confirm, pass, undo);
 
       // Hinweis, wenn Kombination unmoeglich.
       if (color && count && placements.length === 0) {
-        dom.message.textContent = 'Mit dieser Kombination ist keine gültige Platzierung möglich.';
+        setHint('Mit dieser Kombination ist keine gültige Platzierung möglich.');
       }
     }
 
@@ -250,7 +248,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
         state.colorId = state.colorId === die.id ? null : die.id;
         if (die.face !== JOKER) state.jokerColor = null;
         state.selected = [];
-        dom.message.textContent = '';
+        setHint('');
         redraw();
       });
       return chip;
@@ -268,7 +266,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
         state.numberId = state.numberId === die.id ? null : die.id;
         if (die.face !== JOKER) state.jokerCount = null;
         state.selected = [];
-        dom.message.textContent = '';
+        setHint('');
         redraw();
       });
       return chip;

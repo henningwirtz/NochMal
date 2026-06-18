@@ -38,14 +38,18 @@ export async function runGame(game, dom) {
     setStatus(dom, `Wurf ${game.rollCount} · Aktiver Spieler: ${game.activePlayer.name}`);
     announceRound(dom, `Wurf ${game.rollCount} · ${game.activePlayer.name} würfelt`);
     renderBoards(dom, game, { chooserIdx: game.activeIndex });
+    // Ist ein Mensch aktiv, wird erst nach Klick auf "Wuerfeln" aufgedeckt.
+    if (game.activePlayer.isHuman) {
+      await waitForRoll(dom, control);
+      if (control.aborted) return;
+    }
     await animateRoll(dom, game, game.activeIndex);
     if (control.aborted) return;
 
     while (!game.isRoundComplete()) {
       const idx = game.currentChooserIndex();
       const player = game.players[idx];
-      const isActive = idx === game.activeIndex;
-      setTurnInfo(dom, player, isActive);
+      setTurnInfo(dom, player);
       renderBoards(dom, game, { chooserIdx: idx });
       renderScoreboard(dom, game);
 
@@ -132,9 +136,14 @@ async function runSolo(game, dom, control = { aborted: false }) {
     game.beginRound();
     rolls++;
     setStatus(dom, `Solo · Wurf ${rolls}/${SOLO_MAX_ROLLS}`);
-    setTurnInfo(dom, player, true);
+    setTurnInfo(dom, player);
     renderBoards(dom, game, { chooserIdx: 0 });
     renderScoreboard(dom, game);
+    // Im Solo wuerfelt immer der Mensch selbst: erst nach Klick aufdecken.
+    if (player.isHuman) {
+      await waitForRoll(dom, control);
+      if (control.aborted) return;
+    }
     await animateRoll(dom, game, 0);
     if (control.aborted) return;
 
@@ -169,8 +178,31 @@ async function runSolo(game, dom, control = { aborted: false }) {
 function setStatus(dom, text) {
   dom.statusBar.textContent = text;
 }
-function setTurnInfo(dom, player, isActive) {
-  dom.turnInfo.textContent = `${player.name} ist am Zug${isActive ? ' (aktiv)' : ''}`;
+// Header-Chip: kompakter Punktestand des aktuell Waehlenden (kein "am Zug"-Text
+// mehr - wer dran ist, zeigt der hervorgehobene Block).
+function setTurnInfo(dom, player) {
+  dom.turnInfo.textContent = `${player.name}: ${player.sheet.computeScore().total} P.`;
+}
+
+// Wartet darauf, dass der Mensch "Wuerfeln" klickt; deckt danach das bereits
+// in beginRound() gewuerfelte Ergebnis per animateRoll auf. control.cancel
+// ("Spiel beenden") loest das Warten ebenfalls sauber auf.
+function waitForRoll(dom, control) {
+  return new Promise((resolve) => {
+    const btn = dom.rollBtn;
+    if (!btn) { resolve(); return; }
+    btn.disabled = false;
+    btn.classList.add('ready');
+    const done = () => {
+      btn.disabled = true;
+      btn.classList.remove('ready');
+      btn.onclick = null;
+      control.cancel = null;
+      resolve();
+    };
+    btn.onclick = done;
+    control.cancel = done;
+  });
 }
 // Rendert ALLE Spieler-Bloecke gleichzeitig, jeden in einer eigenen Karte.
 // opts: { chooserIdx, focusIdx, interactive, highlight:Set, selected:Set, onCellClick }
@@ -313,6 +345,8 @@ function announce(dom, text) {
   line.className = 'log-line';
   line.textContent = text;
   dom.log.prepend(line);
+  // Letzte Ansage zusaetzlich in die Kommentar-Box (im Querformat sichtbar).
+  if (dom.commentary) dom.commentary.textContent = text;
 }
 
 // Abschnitts-Trenner je Wurf - macht den Spielverlauf im Log nachvollziehbar.
