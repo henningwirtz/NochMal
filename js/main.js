@@ -6,7 +6,7 @@
 import { Game } from './core/game.js';
 import { runGame } from './ui/flow.js';
 import { validateBoard } from './data/board.js';
-import { getScores, clearScores, removeScoreAt, loadSettings, saveSettings, loadPrefs, savePrefs } from './ui/storage.js';
+import { getScores, clearScores, removeScoreAt, loadSettings, saveSettings, loadPrefs, savePrefs, SCORES_KEY } from './ui/storage.js';
 import { setMuted } from './ui/sound.js';
 
 // Spielplan beim Laden validieren (wirft bei Inkonsistenzen).
@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 const $ = (id) => document.getElementById(id);
 
 // Versionsanzeige - hilft zu erkennen, ob die aktuelle (ungecachte) Version laeuft.
-const VERSION = '2026-06-18 · Handy/PWA';
+const VERSION = '2026-06-18 · iPhone-Layout + Spiel beenden';
 const buildBadge = $('build-badge');
 if (buildBadge) buildBadge.textContent = `Stand: ${VERSION}`;
 
@@ -182,6 +182,18 @@ function escapeHtml(s) {
 $('edit-scores').addEventListener('click', () => { editScores = !editScores; renderLeaderboard(); });
 renderLeaderboard();
 
+// Bestenliste immer aktuell halten: Updates aus anderen Tabs/Fenstern sofort
+// uebernehmen und beim Zurueckkehren in die App (PWA aus dem Hintergrund) neu rendern.
+window.addEventListener('storage', (e) => {
+  if (e.key === SCORES_KEY) renderLeaderboard();
+});
+window.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !$('setup-screen').classList.contains('hidden')) renderLeaderboard();
+});
+window.addEventListener('focus', () => {
+  if (!$('setup-screen').classList.contains('hidden')) renderLeaderboard();
+});
+
 function backToSetup() {
   $('end-panel').classList.add('hidden');
   $('game-screen').classList.add('hidden');
@@ -203,6 +215,15 @@ const dom = {
   endPanel: $('end-panel'),
   backToSetup,
 };
+
+// "Spiel beenden": laufendes Spiel verwerfen und zurueck ins Menue. runGame setzt
+// dom.abortGame, das die Spielschleife sauber stoppt (kein Eintrag in der Bestenliste).
+$('end-game-btn').addEventListener('click', () => {
+  if (confirm('Spiel wirklich beenden? Der aktuelle Spielstand geht verloren.')) {
+    if (dom.abortGame) dom.abortGame();
+    backToSetup();
+  }
+});
 
 startBtn.addEventListener('click', () => {
   const count = parseInt(playerCountSel.value, 10);

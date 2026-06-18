@@ -13,7 +13,7 @@ const sameSet = (cells, set) => cells.length === set.size && cells.every(([r, c]
 // Fuehrt den Zug eines Menschen aus. Loest auf, wenn bestaetigt/gepasst wurde.
 // dom: { diceTray, actionBar, boardContainer, message }
 // renderBoards(opts): zeichnet ALLE Spieler-Bloecke; nur der eigene ist interaktiv.
-export function humanTurn(game, playerIndex, dom, renderBoards) {
+export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
   return new Promise((resolve) => {
     const player = game.players[playerIndex];
     const sheet = player.sheet;
@@ -59,11 +59,16 @@ export function humanTurn(game, playerIndex, dom, renderBoards) {
 
     function finish(result) {
       stopTimer();
+      control.cancel = null;
       dom.diceTray.replaceChildren();
       dom.actionBar.replaceChildren();
       dom.message.textContent = '';
       resolve(result);
     }
+
+    // Erlaubt dem Flow, einen wartenden Mensch-Zug von aussen abzubrechen
+    // (z. B. "Spiel beenden"). Der Flow prueft danach control.aborted.
+    control.cancel = () => finish({ action: 'abort' });
 
     // --- Optionaler Zug-Timer ----------------------------------------------
     let timerId = null;

@@ -22,7 +22,16 @@ import {
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function runGame(game, dom) {
-  if (game.soloMode) return runSolo(game, dom);
+  // Abbruch-Steuerung: ueber "Spiel beenden" gesetzt; stoppt die Schleife sauber,
+  // damit keine KI-Zuege im Hintergrund weiterlaufen. control.cancel loest einen
+  // wartenden Mensch-Zug auf.
+  const control = { aborted: false, cancel: null };
+  dom.abortGame = () => {
+    control.aborted = true;
+    if (control.cancel) control.cancel();
+  };
+
+  if (game.soloMode) return runSolo(game, dom, control);
 
   while (!game.finished) {
     game.beginRound();
@@ -30,6 +39,7 @@ export async function runGame(game, dom) {
     announceRound(dom, `Wurf ${game.rollCount} · ${game.activePlayer.name} würfelt`);
     renderBoards(dom, game, { chooserIdx: game.activeIndex });
     await animateRoll(dom, game, game.activeIndex);
+    if (control.aborted) return;
 
     while (!game.isRoundComplete()) {
       const idx = game.currentChooserIndex();
@@ -41,7 +51,8 @@ export async function runGame(game, dom) {
 
       if (player.isHuman) {
         renderDiceStatic(dom, game, idx); // wird von humanTurn ersetzt
-        const res = await humanTurn(game, idx, dom, (o) => renderBoards(dom, game, o));
+        const res = await humanTurn(game, idx, dom, (o) => renderBoards(dom, game, o), control);
+        if (control.aborted) return;
         if (res.action === 'pass') {
           game.submitPass(idx);
           announce(dom, res.timedOut ? `${player.name}: Zeit abgelaufen – gepasst.` : `${player.name} passt.`);
@@ -51,7 +62,8 @@ export async function runGame(game, dom) {
           announce(dom, `${player.name}: ${describeMove(res.choice)}`);
         }
       } else {
-        await aiTurn(game, idx, dom);
+        await aiTurn(game, idx, dom, control);
+        if (control.aborted) return;
       }
       renderScoreboard(dom, game);
     }
@@ -65,12 +77,13 @@ export async function runGame(game, dom) {
   showEnd(dom, game);
 }
 
-async function aiTurn(game, idx, dom) {
+async function aiTurn(game, idx, dom, control = {}) {
   const player = game.players[idx];
   const spd = game.aiSpeed || 1; // Tempo-Faktor (>1 langsamer, <1 schneller)
   setStatus(dom, `${player.name} (KI) überlegt …`);
   renderDiceStatic(dom, game, idx);
   await delay(1100 * spd);
+  if (control.aborted) return;
 
   const move = chooseMove(player.sheet, game.availablePool(idx), game.aiDifficulty);
   if (!move) {
@@ -87,8 +100,10 @@ async function aiTurn(game, idx, dom) {
     selected.add(`${r},${c}`);
     renderBoards(dom, game, { chooserIdx: idx, focusIdx: idx, selected: new Set(selected) });
     await delay(550 * spd);
+    if (control.aborted) return;
   }
   await delay(550 * spd);
+  if (control.aborted) return;
 
   // 2) Auswahl gemeinsam ankreuzen und kurz markiert stehen lassen.
   game.submitChoice(idx, {
@@ -109,7 +124,7 @@ async function aiTurn(game, idx, dom) {
 // ---------------------------------------------------------------------------
 // Solo-Variante: 2+2 Wuerfel, 30 Wuerfe, danach Wertung mit Level-Tabelle.
 // ---------------------------------------------------------------------------
-async function runSolo(game, dom) {
+async function runSolo(game, dom, control = { aborted: false }) {
   const player = game.players[0];
   let rolls = 0;
 
@@ -121,10 +136,12 @@ async function runSolo(game, dom) {
     renderBoards(dom, game, { chooserIdx: 0 });
     renderScoreboard(dom, game);
     await animateRoll(dom, game, 0);
+    if (control.aborted) return;
 
     if (player.isHuman) {
       renderDiceStatic(dom, game, 0);
-      const res = await humanTurn(game, 0, dom, (o) => renderBoards(dom, game, o));
+      const res = await humanTurn(game, 0, dom, (o) => renderBoards(dom, game, o), control);
+      if (control.aborted) return;
       if (res.action === 'pass') {
         game.submitPass(0);
         announce(dom, res.timedOut ? `Wurf ${rolls}: Zeit abgelaufen – gepasst.` : `Wurf ${rolls}: gepasst.`);
@@ -134,7 +151,8 @@ async function runSolo(game, dom) {
         announce(dom, `Wurf ${rolls}: ${describeMove(res.choice)}`);
       }
     } else {
-      await aiTurn(game, 0, dom);
+      await aiTurn(game, 0, dom, control);
+      if (control.aborted) return;
     }
 
     const log = game.resolveRound();
