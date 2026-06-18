@@ -10,6 +10,53 @@ Unterstützt Pass-and-Play (1–6 Spieler), heuristische KI-Gegner (3 Schwierigk
 und die Solo-Variante. Läuft als **PWA** (installierbar, offline, touch-optimiert) –
 am Handy via GitHub Pages, siehe README („Auf dem Handy spielen").
 
+## Roadmap / geplante Features
+
+Wird Stück für Stück abgearbeitet; einzelne Features werden bei Bedarf separat geplant.
+Erledigte Punkte hier als `[x]` markieren bzw. nach unten/„Erledigt" verschieben.
+
+### KI / Bots
+- **Bots mit Namen & Charakteren** – Bots heißen z.B. „Leopold"; Schwierigkeit bleibt
+  (`game.aiDifficulty`). Im Log/UI statt „denkt nach" charakterbezogene Sprüche/Aktionen
+  („Gucken wir erstmal, was Henning hat"). Langfristig: eigene Bots im Setup anlegbar.
+  → `flow.js` (aiTurn-Ausgabe), `main.js` (Setup/Namen), neue Sprüche-Daten z.B.
+  `js/data/bots.js`.
+- **Leopold-Bot** – eigener Spielstil (sabotiert/blockt Mitspieler), Fokus auf
+  lustige/dumme Sprüche; „normale" KI bleibt parallel bestehen. → `ai.js`
+  (Taktik-Variante), `js/data/bots.js` (Sprüche).
+- **Bot-Rückmeldung fixen** – wenn ein Bot nichts nimmt/nehmen kann, klare Meldung
+  statt Hängenbleiben auf „denkt nach". → `flow.js` (aiTurn).
+- **KI-Spielzüge optimieren** – bessere Heuristik in `chooseMove`. → `ai.js`.
+
+### Spielregeln / Varianten
+- **Neue Blöcke (auswählbar)** – mehrere Spielpläne (offizielle Varianten + eigene),
+  im Setup wählbar; Engine ist datengetrieben. → `board.js` (mehrere `RAW_GRID`/`STARS`),
+  `main.js` (Auswahl im Setup), `storage.js` (Auswahl merken).
+- **Joker als 6** – ein Zahl-Joker-Element darf als Wert 6 eingesetzt werden.
+  → `constants.js`/`rules.js`, ggf. `sheet.js`.
+- **Minuspunkte / Pass-Felder** – begrenzte Anzahl Pässe (z.B. 5); jedes Passen
+  verbraucht ein Feld (−1/−2), am Ende verrechnet (im Kern Original-Passregel).
+  → `sheet.js` (Pass-Zähler + Wertung), `rules.js`/`game.js` (Pass-Aktion),
+  `boardView.js` (Pass-Felder anzeigen).
+
+### UI / Darstellung
+- **Quer-Modus optimieren** – Landscape-Layout, Block ohne Horizontal-Scroll.
+  → `styles.css` (Media Queries `orientation: landscape`).
+- **Spieler-Stammliste mit Bildern/Emojis** – gespeicherte Liste bekannter Spieler
+  (z.B. „Henning") mit fest zugewiesenem Bild/Emoji; im Setup auswählbar statt jedes Mal
+  neu zu tippen, runden­übergreifend wiederverwendet. Avatar erscheint in Setup, Spiel
+  und Bestenliste. → `storage.js` (Spieler-Stammliste persistieren), `main.js` (Setup:
+  Auswahl/Anlegen/Zuweisen), `boardView.js`/`flow.js` (Anzeige).
+
+### Ton / Sprache
+- **Niederländische Ansage** – optionale Sprachausgabe (Web Speech API, `nl-NL`), sagt
+  den Zug an, z.B. „drie geel" bei 3× Gelb. Toggle analog zum bestehenden Mute.
+  → `sound.js` (TTS-Ansage), `main.js`/`prefs` (Toggle).
+
+### Später (Backend nötig – zurückgestellt)
+- **Scoreboard-Backend** – server-/cloudbasierte globale Bestenliste.
+- **Online-Mehrspieler** – gemeinsam spielen, jeder kreuzt selbst an.
+
 ## Workflow / Git
 
 **Nach jeder Änderung wird diese `CLAUDE.md` aktualisiert und der Fortschritt direkt
