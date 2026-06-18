@@ -47,7 +47,10 @@ Erledigte Punkte hier als `[x]` markieren bzw. nach unten/„Erledigt" verschieb
   `--cell` zusätzlich höhenbegrenzt (kein H-/V-Scroll des Blocks).
 - **Handy-Spielmodus optimieren** – durchgängig bedienbares Layout am Smartphone:
   - [x] *Handy quer für bessere Übersicht* – Querformat als zweispaltiges Grid
-    (Block | Steuerspalte), nutzt die Landscape-Breite. (**Hochformat noch offen.**)
+    (Block | Steuerspalte), nutzt die Landscape-Breite. Aktiver Block ist
+    vollständig & fixiert (sticky + `order:-1`), übrige Blöcke per Runterscrollen;
+    `--cell` so bemessen, dass Raster + side-panel nebeneinander komplett passen.
+    (**Hochformat noch offen.**)
   - [x] *Alle wichtigen Buttons gleichzeitig sichtbar & bedienbar* – im Querformat
     bleiben Hell/Dunkel + Ton (`#top-controls`) fix oben rechts, der Header-Inhalt
     inkl. „Spiel beenden" rutscht via `padding-right` darunter weg → kollisionsfrei,
