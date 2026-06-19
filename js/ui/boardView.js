@@ -29,7 +29,7 @@ const cellKey = (r, c) => `${r},${c}`;
 export function renderSheet(sheet, options = {}) {
   const {
     interactive = false, highlight = new Set(), selected = new Set(), onCellClick,
-    onColumnClick = null, onColorClick = null,
+    onColumnClick = null, onColorClick = null, onJokerClick = null,
   } = options;
 
   const root = document.createElement('div');
@@ -95,7 +95,7 @@ export function renderSheet(sheet, options = {}) {
   root.appendChild(gridArea);
 
   // --- Seitliches Wertungspanel -------------------------------------------
-  root.appendChild(renderSidePanel(sheet, onColorClick));
+  root.appendChild(renderSidePanel(sheet, onColorClick, onJokerClick));
 
   return root;
 }
@@ -117,7 +117,7 @@ function appendScoreRow(gridArea, values, sheet, which) {
   }
 }
 
-function renderSidePanel(sheet, onColorClick = null) {
+function renderSidePanel(sheet, onColorClick = null, onJokerClick = null) {
   const panel = document.createElement('div');
   panel.className = 'side-panel';
 
@@ -182,6 +182,11 @@ function renderSidePanel(sheet, onColorClick = null) {
     box.className = 'joker-box';
     box.textContent = '!';
     if (i < sheet.jokersUsed) box.classList.add('used');
+    if (onJokerClick) {
+      box.classList.add('clickable');
+      const idx = i;
+      box.addEventListener('click', () => onJokerClick(idx));
+    }
     jokerRow.appendChild(box);
   }
   jokerGroup.appendChild(jokerRow);

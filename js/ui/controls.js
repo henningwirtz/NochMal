@@ -183,6 +183,8 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
         // Erneutes Antippen gibt den vollen Wert wieder frei (Umschalter).
         onColumnClick: (col) => { game.toggleColumnStrikeByOther(playerIndex, col); redraw(); },
         onColorClick: (color) => { game.toggleColorStrikeByOther(playerIndex, color); redraw(); },
+        // PvP: Joker antippen = als verwendet markieren (kostet je +1) bzw. wieder freigeben.
+        onJokerClick: (i) => { game.toggleJokerUsed(playerIndex, i); redraw(); },
       });
 
       // --- Aktionsleiste (Bestätigen, Passen, Rückgängig) ------------------

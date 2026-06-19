@@ -240,9 +240,10 @@ body.mode-notepad .dice-group { flex-wrap: wrap; }
 }
 .col-letter.start-col { color: var(--accent); }
 /* PvP/Notizblock: Buchstaben & Bonus-Boxen antippbar ("anderer war zuerst"). */
-.col-letter.clickable, .bonus-box.clickable { cursor: pointer; }
+.col-letter.clickable, .bonus-box.clickable, .joker-box.clickable { cursor: pointer; }
 .col-letter.clickable:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
 .bonus-box.clickable:hover { box-shadow: 0 0 0 2px var(--accent); }
+.joker-box.clickable:hover { box-shadow: 0 0 0 2px var(--accent); }
 .col-letter.struck { text-decoration: line-through; opacity: 0.55; }
 .cell {
   width: var(--cell); height: var(--cell);

@@ -251,6 +251,11 @@ export class Game {
     }
   }
 
+  // PvP: einen Joker per Antippen als verwendet markieren (kostet je +1) bzw. freigeben.
+  toggleJokerUsed(playerIndex, boxIndex) {
+    this.players[playerIndex].sheet.toggleJokerAt(boxIndex);
+  }
+
   // --- Runde auswerten -----------------------------------------------------
   resolveRound() {
     if (!this.isRoundComplete()) throw new Error('Runde noch nicht abgeschlossen');

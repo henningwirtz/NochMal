@@ -214,6 +214,18 @@ export function runTests() {
     eq(sheet.colorAward[COLORS.GELB], 5, 'voller Farb-Bonus wieder hergestellt');
   });
 
+  test('PvP: Joker per Antippen verwenden (Toggle)', () => {
+    const game = new Game([{ name: 'Du', isHuman: true }], { relaxed: true });
+    const sheet = game.players[0].sheet;
+    eq(sheet.jokersUsed, 0, 'anfangs kein Joker verwendet');
+    game.toggleJokerUsed(0, 0);                  // erste Box antippen
+    eq(sheet.jokersUsed, 1, 'ein Joker verwendet');
+    game.toggleJokerUsed(0, 2);                  // dritte Box antippen -> bis dorthin
+    eq(sheet.jokersUsed, 3, 'drei Joker verwendet');
+    game.toggleJokerUsed(0, 2);                  // dieselbe Box wieder -> ab dort frei
+    eq(sheet.jokersUsed, 2, 'wieder einer frei (zwei verwendet)');
+  });
+
   // 13) Joker-Auswahl: Farb- UND Zahl-Joker setzen 2 "!"-Felder ein und kreuzen an.
   test('Joker: Farb- und Zahl-Joker verbrauchen 2 Felder', () => {
     const game = new Game([{ name: 'A', isHuman: true }]);

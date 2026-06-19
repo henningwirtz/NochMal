@@ -57,6 +57,14 @@ export class Sheet {
     this.jokersUsed += n;
   }
 
+  // PvP/Notizblock: einen Joker per Antippen als "verwendet" markieren bzw. wieder
+  // freigeben. Die Boxen füllen sich von links; Antippen einer noch freien Box
+  // markiert alle bis dorthin als verwendet, Antippen einer schon verwendeten gibt
+  // ab dort wieder frei. Jeder verwendete Joker kostet +1 (entfällt als Bonus).
+  toggleJokerAt(i) {
+    this.jokersUsed = (i < this.jokersUsed) ? i : i + 1;
+  }
+
   // --- Spalten -------------------------------------------------------------
   isColumnComplete(col) {
     for (let r = 0; r < GRID_ROWS; r++) {

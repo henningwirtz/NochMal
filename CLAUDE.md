@@ -205,6 +205,12 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   reduzierter Wert), erneutes Tippen gibt den vollen Wert wieder frei
   (`game.toggleColumnStrikeByOther`/`toggleColorStrikeByOther`, stuft auch einen bereits
   gewerteten Wert passend um; `sheet.unstrikeColumnTop`/`unstrikeColorFirst`).
+  **Joker antippen = verwenden:** im PvP sind auch die Joker-Felder („!") anklickbar
+  (`onJokerClick` → `game.toggleJokerUsed` → `sheet.toggleJokerAt`). Die Boxen füllen sich
+  von links; Antippen einer freien Box markiert alle bis dorthin als verwendet, Antippen
+  einer schon verwendeten gibt ab dort wieder frei. Jeder verwendete Joker entfällt als
+  +1-Bonus (kostet also einen Punkt). Nur im PvP/Notizblock verdrahtet – im KI-Modus werden
+  Joker weiterhin nur übers Würfel-Setzen verbraucht.
   **Wertungspanel** (`.side-panel`): Farb-Bonus, Joker UND Punkte stehen in EINER kompakten
   Reihe nebeneinander (statt untereinander) → alles rückt nach oben, der Block bekommt mehr
   Platz. **Punkte:** im Hochformat ohne Spielername, nur `… P.` (`#turn-info`,
