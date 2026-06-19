@@ -81,6 +81,14 @@ export function runGame(game, dom) {
     }
     updateUndoButton();
     if (game.isRoundComplete()) {
+      // PvP/Notizblock: KEIN separater Würfeln-Schritt - man würfelt real am Tisch
+      // und kreuzt direkt an. Die Referenzwürfel werden ohne Klick neu gewürfelt,
+      // danach geht es sofort zum Ankreuzen.
+      if (game.relaxed) {
+        game.beginRound();
+        presentChooser();
+        return;
+      }
       // Es muss gewürfelt werden: aktiver Spieler ist dran.
       if (game.players[game.activeIndex].isHuman) presentRoll();
       else presentAiPhase();
@@ -129,7 +137,7 @@ export function runGame(game, dom) {
     const idx = game.currentChooserIndex();
     const player = game.players[idx];
     setStatus(dom, `${player.name} ist am Zug`);
-    setTurnInfo(dom, player);
+    setTurnInfo(dom, player, game.relaxed);
     renderBoards(dom, game, { chooserIdx: idx });
     renderScoreboard(dom, game);
     if (dom.rollBtn) { dom.rollBtn.classList.add('hidden'); dom.rollBtn.onclick = null; }
@@ -318,9 +326,12 @@ function setStatus(dom, text) {
   dom.statusBar.textContent = text;
 }
 // Header-Chip: kompakter Punktestand des aktuell Waehlenden (kein "am Zug"-Text
-// mehr - wer dran ist, zeigt der hervorgehobene Block).
-function setTurnInfo(dom, player) {
-  dom.turnInfo.textContent = `${player.name}: ${player.sheet.computeScore().total} P.`;
+// mehr - wer dran ist, zeigt der hervorgehobene Block). Im PvP/Notizblock gibt es
+// nur einen Block -> Name weglassen, nur die Punkte ("… P.") zeigen.
+function setTurnInfo(dom, player, relaxed = false) {
+  dom.turnInfo.textContent = relaxed
+    ? `${player.sheet.computeScore().total} P.`
+    : `${player.name}: ${player.sheet.computeScore().total} P.`;
 }
 
 // Rendert ALLE Spieler-Bloecke gleichzeitig, jeden in einer eigenen Karte.

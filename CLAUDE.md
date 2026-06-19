@@ -64,7 +64,10 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   werden per Klick ausgelöst; `present()` ist die zentrale Weiche, die aus dem
   Spielzustand ableitet, wer als Nächstes dran ist und ob Mensch oder KI:
   `presentRoll`/`presentChooser` (Mensch, interaktiv), `presentAiPhase`/`runAiPhase`
-  (KI), `advance` (nach Mensch-Zug weiterschalten). **KI-Phase:** alle direkt
+  (KI), `advance` (nach Mensch-Zug weiterschalten). **PvP/Notizblock (`relaxed`):**
+  KEIN separater Würfeln-Schritt – `present()` ruft hier ohne Klick `beginRound()`
+  (Referenzwürfel) und geht direkt zu `presentChooser`; man würfelt real am Tisch und
+  kreuzt sofort an. **KI-Phase:** alle direkt
   aufeinanderfolgenden KI-Schritte (würfeln + wählen, auch über mehrere Runden) sind
   EINE Phase – `presentAiPhase` zeigt EINEN Knopf „▶ KI laufen lassen", `runAiPhase`
   führt dann die ganze Phase animiert aus (`aiRoll`/`aiChoose`), bis wieder ein Mensch
@@ -139,9 +142,15 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   grid-basiert in `resolveRound`, auch im PvP/Notizblock-Modus (`relaxed`, ein Block);
   die Übersicht zeigt Bonus/Spalten/Joker/Sterne + TOTAL je Block. Bei nur EINEM Block
   (Solo oder PvP) steht „Endstand: X Punkte" statt „Sieger".
-- PvP/Notizblock-Modus (`body.mode-notepad`): die Würfel sind nur Referenz (man würfelt
-  real am Tisch) und es gibt nur EINEN Block – daher ~50 % größer (60 px im Hochformat;
-  im engen Querformat auf 40 px zurückgenommen).
+- PvP/Notizblock-Modus (`body.mode-notepad`, nur EIN Block, Würfel sind Referenz):
+  bewusst großzügiger als der KI-Modus. **Würfel** ~50 % größer (90 px im Hochformat,
+  im engen Querformat 52 px). **Block** größer: `--cell` nutzt mehr Breite (auf dem Handy
+  durch die Bildschirmbreite begrenzt) und der eigene Block-Scrollbalken entfällt
+  (`overflow: visible`). **Spaltenbuchstaben + Felder doppelt so hoch** (`height:
+  calc(var(--cell)*2)`, Breite unverändert; im engen Querformat zurückgenommen) – so wird
+  der Block ohne Horizontal-Scroll deutlich größer/lesbarer. **Punkte:** ohne Spielername,
+  nur `… P.` – im Hochformat oben im Header (`#turn-info`, `setTurnInfo(…, relaxed)`),
+  der Block-Kopf (`.pb-head`) entfällt; im Querformat als kleines Badge am Block.
 - „Spiel beenden" (`#end-game-btn` im Spiel-Header): verwirft das laufende Spiel und
   geht zurück ins Menü. `runGame` setzt dazu `dom.abortGame`; weil der Ablauf
   event-gesteuert ist (keine durchlaufende Schleife), bricht es nur einen evtl. gerade

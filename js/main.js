@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 const $ = (id) => document.getElementById(id);
 
 // Versionsanzeige - hilft zu erkennen, ob die aktuelle (ungecachte) Version laeuft.
-const VERSION = '2026-06-19 · Spielende bei 2 Farben + Endübersicht; PvP-Würfel größer; Joker-Auswahl (Farbe + Zahl) ohne Überschneidung im Querformat';
+const VERSION = '2026-06-19 · PvP: ohne Würfeln ankreuzen, größere Würfel + Block, doppelt so hohe Spalten/Felder, Punkte ohne Name; kein Block-Scroll';
 const buildBadge = $('build-badge');
 if (buildBadge) buildBadge.textContent = `Stand: ${VERSION}`;
 

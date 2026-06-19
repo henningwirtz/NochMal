@@ -135,9 +135,10 @@ button.big { font-size: 1.1rem; padding: 12px 24px; margin-top: 10px; }
 .die.selected { outline: 3px solid var(--accent); outline-offset: 1px; transform: translateY(-2px); }
 
 /* PvP/Notizblock: die Würfel sind hier nur Referenz (man würfelt real am Tisch) und
-   es gibt nur EINEN Block - daher viel Platz. Würfel ~50% größer und gut lesbar.
+   es gibt nur EINEN Block - daher viel Platz. Würfel deutlich größer und gut lesbar.
    Im Querformat wird das weiter unten wieder zurückgenommen (dort ist es eng). */
-body.mode-notepad .die { width: 60px; height: 60px; font-size: 1.6rem; border-radius: 10px; }
+body.mode-notepad .die { width: 90px; height: 90px; font-size: 2.4rem; border-radius: 12px; }
+body.mode-notepad .dice-group { flex-wrap: wrap; }
 
 /* Wuerfelanimation: kurzes Wackeln/Kippen waehrend des Wurfs. */
 .die.rolling { animation: dieRoll 0.16s linear infinite; }
@@ -404,6 +405,38 @@ body.light { background: radial-gradient(1100px 560px at 50% -8%, #dde7f3 0%, va
 body.light .message { color: #9a6b00; }
 
 /* ===========================================================================
+   PvP / Notizblock-Modus (body.mode-notepad)
+   ---------------------------------------------------------------------------
+   Es gibt nur EINEN Block und die Würfel sind nur Referenz - daher alles
+   großzügiger & besser lesbar als im KI-Modus. Greift in jedem Layout; das
+   enge Querformat nimmt einzelne Punkte weiter unten wieder zurück.
+   =========================================================================== */
+/* (Block) Zellen-Breite wo Platz ist größer (auf dem Handy durch die Bildschirm-
+   breite begrenzt -> dort wächst v.a. die Höhe, siehe unten). */
+body.mode-notepad { --cell: clamp(18px, calc((100vw - 80px) / 15), 40px); }
+
+/* (Block) Kein eigener Scrollbalken mehr im Block - das Raster passt sich der
+   Breite an (oben über --cell), Scrollen ist nicht mehr nötig. */
+body.mode-notepad .player-board { overflow: visible; }
+
+/* (Spalten) Spaltenbuchstaben UND ihre Felder doppelt so hoch - Breite bleibt
+   gleich (= Zellenbreite). Dadurch wird der Block insgesamt deutlich größer und
+   besser lesbar, ohne dass horizontal gescrollt werden muss. */
+body.mode-notepad .col-letter { height: calc(var(--cell) * 2); font-size: 1.05rem; }
+body.mode-notepad .cell { height: calc(var(--cell) * 2); }
+
+/* (Punkte) Spielername entfällt. Die Punkte stehen kompakt als "… P." (ohne Name)
+   oben im Header (#turn-info) - ein passender Ort, der den Block nicht stört. Der
+   Punkte-Block-Kopf über dem Raster entfällt daher ganz (mehr Platz für den Block).
+   Im engen Querformat (Header ausgeblendet) wird unten ein kleines Badge gezeigt. */
+body.mode-notepad .pb-head { display: none; }
+body.mode-notepad .pb-name, body.mode-notepad .pb-turn { display: none; }
+body.mode-notepad .pb-score {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px 12px;
+}
+
+/* ===========================================================================
    Touch & Mobile
    =========================================================================== */
 /* Entfernt die 300ms-Verzögerung / Doppeltipp-Zoom auf Bedienelementen. */
@@ -529,8 +562,15 @@ body.light .message { color: #9a6b00; }
   .die        { width: 34px; height: 34px; font-size: 1rem; }
   /* Im engen Querformat die PvP-Vergrößerung zurücknehmen (Block hat hier Vorrang),
      dafür etwas größer als die normalen Würfel, da es nur einen Block gibt. */
-  body.mode-notepad .dice-group { grid-template-columns: repeat(3, 40px); }
-  body.mode-notepad .die { width: 40px; height: 40px; font-size: 1.1rem; border-radius: 8px; }
+  body.mode-notepad .dice-group { grid-template-columns: repeat(3, 52px); }
+  body.mode-notepad .die { width: 52px; height: 52px; font-size: 1.4rem; border-radius: 8px; }
+  /* Die doppelte Zellen-/Buchstabenhöhe ist nur im Hochformat sinnvoll - im engen
+     Querformat (geringe Höhe) bleibt der Block kompakt. */
+  body.mode-notepad .cell { height: var(--cell); }
+  body.mode-notepad .col-letter { height: 18px; }
+  /* Header (#turn-info) ist im Querformat ausgeblendet -> Punkte als kleines Badge
+     im Block-Kopf zeigen (nur die Punkte, ohne Namen). */
+  body.mode-notepad .pb-head { display: flex; justify-content: flex-end; margin: 0 0 2px; }
 
   /* Joker-Auswahl als eigene, deutlich abgesetzte Karte mit sichtbarem Titel.
      Sitzt unter den Würfeln und ist so gut antippbar. Die Auswahl-Würfel sind hier
