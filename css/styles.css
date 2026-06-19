@@ -523,12 +523,12 @@ body.mode-notepad .totals { margin-top: 0; }
        Raster mehr Platz fuer die Steuerspalte (v.a. Joker-Auswahl) bleibt. */
     --cell: calc(0.95 * clamp(14px, min((100vw - 240px) / 15, (100dvh - 96px) / 9), 30px));
   }
-  /* PvP/Notizblock: hier steht über dem Raster zusätzlich die Bonus/Joker-Reihe und das
-     Punkte-Badge, und es darf NIE gescrollt werden. Darum etwas mehr Höhe reservieren
-     (- 150px statt - 96px), damit der ganze Block sicher auf eine Bildschirmhöhe passt.
-     Lieber etwas kleinere Zellen als abgeschnitten/scrollend. */
+  /* PvP/Notizblock: über dem Raster steht nur noch die kompakte Bonus/Joker-Reihe
+     (Punkte sind in die rechte Spalte gewandert, der Block-Kopf entfällt), und es darf
+     NIE gescrollt werden. Darum reicht jetzt weniger Höhen-Reserve (- 116px) -> die
+     Zellen werden deutlich größer und füllen den Platz über/neben dem Block. */
   body.mode-notepad {
-    --cell: calc(0.95 * clamp(14px, min((100vw - 210px) / 15, (100dvh - 150px) / 9), 34px));
+    --cell: clamp(16px, min((100vw - 200px) / 15, (100dvh - 116px) / 9), 42px);
   }
 
   /* Reihenfolge der Steuerspalte (von oben):
@@ -542,9 +542,10 @@ body.mode-notepad .totals { margin-top: 0; }
   #game-screen:not(.hidden) {
     display: grid;
     grid-template-columns: 1fr minmax(138px, 176px); /* Block | schmale Steuerspalte (~8% schmaler) */
-    grid-template-rows: auto auto auto 1fr auto auto auto;
+    grid-template-rows: auto auto auto auto 1fr auto auto auto;
     grid-template-areas:
       "board ctl"
+      "board score"
       "board comment"
       "board roll"
       "board dice"
@@ -567,6 +568,18 @@ body.mode-notepad .totals { margin-top: 0; }
   /* Runde/Zug-Info entfallen: Runde steht in den Ansagen, "am Zug" zeigt der
      hervorgehobene Block. So ist oben Platz fürs Steuer-Cluster (siehe unten). */
   .status-bar, .turn-info { display: none; }
+
+  /* PvP/Notizblock: die Punkte stehen NICHT mehr als Band über dem Block (pb-head
+     entfällt unten), sondern als eigenes Feld oben in der rechten Steuerspalte.
+     Das gibt dem Block die volle Höhe (und Breite). */
+  body.mode-notepad .turn-info {
+    display: block; grid-area: score; margin: 0; align-self: start;
+    text-align: center; font-weight: 800; color: var(--accent);
+    font-size: 1.05rem; background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px;
+  }
+  /* Im PvP gibt es keinen KI-Kommentar -> den (leeren) Kasten ausblenden, spart Höhe. */
+  body.mode-notepad .commentary-box { display: none; }
 
   /* KI-Aktionen (Kommentar) prominent ganz oben; margin-top hält den Platz fürs
      fixe Cluster (Theme/Ton + "Spiel beenden") oben rechts frei. */
@@ -593,8 +606,11 @@ body.mode-notepad .totals { margin-top: 0; }
 
   /* Würfel + Joker-Auswahl in einer dehnbaren Zone (1fr). Wird es eng (Joker-Auswahl
      sichtbar), kann nur DIESER Bereich scrollen - die Aktionen bleiben unten stehen. */
-  .dice-tray  { grid-area: dice; margin: 0; flex-direction: column; gap: 6px;
-                overflow-y: auto; min-height: 0; }
+  /* align-self: stretch -> der Würfel-/Joker-Bereich füllt genau seine 1fr-Zeile und
+     scrollt bei Bedarf INTERN (overflow-y), statt nach unten über die Aktionen
+     (Bestätigen/Passen) zu laufen. So überdeckt nichts mehr die Würfel. */
+  .dice-tray  { grid-area: dice; align-self: stretch; margin: 0; flex-direction: column;
+                gap: 6px; overflow-y: auto; min-height: 0; }
   .dice-group { display: grid; grid-template-columns: repeat(3, 34px); gap: 6px; justify-content: start; }
   .dice-label { display: none; }
   .die        { width: 34px; height: 34px; font-size: 1rem; }
@@ -606,9 +622,9 @@ body.mode-notepad .totals { margin-top: 0; }
      Querformat (geringe Höhe) bleibt der Block kompakt. */
   body.mode-notepad .cell { height: var(--cell); }
   body.mode-notepad .col-letter { height: 18px; }
-  /* Header (#turn-info) ist im Querformat ausgeblendet -> Punkte als kleines Badge
-     im Block-Kopf zeigen (nur die Punkte, ohne Namen). */
-  body.mode-notepad .pb-head { display: flex; justify-content: flex-end; margin: 0 0 2px; }
+  /* Punkte stehen jetzt in der rechten Spalte (.turn-info, s. o.) -> der Block-Kopf
+     über dem Raster entfällt komplett, damit der Block die volle Höhe bekommt. */
+  body.mode-notepad .pb-head { display: none; }
 
   /* Joker-Auswahl als eigene, deutlich abgesetzte Karte mit sichtbarem Titel.
      Sitzt unter den Würfeln und ist so gut antippbar. Die Auswahl-Würfel sind hier
@@ -670,16 +686,22 @@ body.mode-notepad .totals { margin-top: 0; }
      über dem Block, alles wirkt wie EINE Fläche. Die Icons bleiben technisch fixiert
      (sie liegen im HTML außerhalb des Spiel-Bereichs), sitzen aber genau am Kopf der
      rechten Spalte. */
+  /* Oberste Zeile der rechten Spalte = EINE Reihe: links der (kleinere) "Spiel
+     beenden"-Knopf, rechts daneben die beiden Icons (Theme/Ton). Die Icons liegen im
+     HTML außerhalb des Spiel-Bereichs und bleiben deshalb technisch fixiert - sie sind
+     aber exakt auf die rechte Spaltenkante und die Knopfhöhe ausgerichtet, sodass alles
+     wie eine zusammenhängende Reihe wirkt. */
   #top-controls {
-    top: max(6px, env(safe-area-inset-top));
-    right: max(8px, env(safe-area-inset-right));
+    top: max(16px, env(safe-area-inset-top));      /* gleiche Höhe wie der Knopf (Body-Padding) */
+    right: max(16px, env(safe-area-inset-right));   /* bündig mit der rechten Spaltenkante */
     gap: 6px;
   }
-  .icon-btn { width: 31px; height: 31px; font-size: 0.9rem; }
+  .icon-btn { width: 30px; height: 30px; font-size: 0.85rem; }
   .end-game-btn {
-    grid-area: ctl; align-self: start;
-    width: 100%; margin: 40px 0 0;   /* 40px Abstand: macht Platz für die fixen Icons darüber */
-    padding: 7px; font-size: 0.8rem; text-align: center;
+    grid-area: ctl; align-self: start; justify-self: start;
+    width: calc(100% - 72px);   /* rechts daneben ist Platz für die 2 Icons (2×30 + Lücke) */
+    height: 30px; margin: 0; padding: 0 6px;
+    font-size: 0.72rem; line-height: 1; text-align: center;
   }
 }
 
