@@ -706,12 +706,19 @@ body.mode-notepad .totals { margin-top: 0; }
   }
   .mode-card { flex: 0 0 auto; }
 
-  /* Einstellungskarte (alles außer Bestenliste) in die mittlere Spalte. */
+  /* Einstellungskarte (alles außer Bestenliste) in die mittlere Spalte. Sie wird
+     nur so hoch wie ihr Inhalt (oben ausgerichtet, nicht über die ganze Höhe
+     gestreckt) und scrollt erst, wenn der Inhalt die Spaltenhöhe übersteigt. */
   #setup-screen > .setup-card:not(#leaderboard-card) {
     grid-area: settings; max-width: none; margin: 0;
-    height: 100%; overflow-y: auto;
+    align-self: start; max-height: 100%; overflow-y: auto;
   }
   .field { margin-bottom: 10px; }
+  /* Mensch/KI-Umschalter kompakt halten, damit er in der schmalen Spalte nicht
+     abgeschnitten wird (Name darf schrumpfen, Schalter behält seinen Platz). */
+  .slot-row { gap: 6px; }
+  .slot-name { min-width: 0; }
+  .toggle button { padding: 6px 9px; font-size: 0.85rem; }
 
   /* Bestenliste oben, Kurzregeln darunter - beide in der rechten Spalte. */
   #leaderboard-card {

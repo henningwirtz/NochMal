@@ -80,15 +80,10 @@ export function runGame(game, dom) {
       return;
     }
     updateUndoButton();
+    // PvP/Notizblock: eigener Ablauf - die Referenzwürfel bleiben stehen, bis man
+    // über den Würfeln-Button selbst neu würfelt. Angekreuzt wird frei.
+    if (game.relaxed) { presentRelaxed(); return; }
     if (game.isRoundComplete()) {
-      // PvP/Notizblock: KEIN separater Würfeln-Schritt - man würfelt real am Tisch
-      // und kreuzt direkt an. Die Referenzwürfel werden ohne Klick neu gewürfelt,
-      // danach geht es sofort zum Ankreuzen.
-      if (game.relaxed) {
-        game.beginRound();
-        presentChooser();
-        return;
-      }
       // Es muss gewürfelt werden: aktiver Spieler ist dran.
       if (game.players[game.activeIndex].isHuman) presentRoll();
       else presentAiPhase();
@@ -131,6 +126,40 @@ export function runGame(game, dom) {
     };
   }
 
+  // PvP/Notizblock: Markier-Turn vorbereiten (ohne neu zu würfeln) und ankreuzen
+  // lassen. Der Würfeln-Button bleibt sichtbar (siehe presentChooser) und würfelt
+  // die Referenzwürfel nur auf Knopfdruck neu - sie bleiben sonst stehen.
+  function presentRelaxed() {
+    if (game.isRoundComplete()) game.beginRelaxedTurn();
+    presentChooser();
+  }
+
+  // PvP/Notizblock: Würfeln-Button verdrahten - würfelt NUR die Referenzwürfel neu
+  // (animiert), ohne den laufenden Markier-Turn zu beenden.
+  function setupRelaxedRoll(idx) {
+    const btn = dom.rollBtn;
+    if (!btn) return;
+    btn.classList.remove('hidden');
+    btn.classList.add('ready');
+    btn.disabled = false;
+    btn.textContent = '🎲 Würfeln';
+    btn.onclick = async () => {
+      if (busy) return;
+      busy = true;
+      btn.disabled = true;
+      btn.classList.remove('ready');
+      updateUndoButton();
+      game.rollReference();
+      announceRound(dom, `Wurf ${game.rollCount}`);
+      await animateRoll(dom, game, idx);
+      pendingSnapshot = game.snapshot();
+      busy = false;
+      btn.disabled = false;
+      btn.classList.add('ready');
+      updateUndoButton();
+    };
+  }
+
   // Ein menschlicher Spieler ist am Zug (interaktiv).
   function presentChooser() {
     pauseAuto = false;
@@ -140,7 +169,9 @@ export function runGame(game, dom) {
     setTurnInfo(dom, player, game.relaxed);
     renderBoards(dom, game, { chooserIdx: idx });
     renderScoreboard(dom, game);
-    if (dom.rollBtn) { dom.rollBtn.classList.add('hidden'); dom.rollBtn.onclick = null; }
+    // PvP: Würfeln-Button anbieten (Referenzwürfel neu würfeln). Sonst ausblenden.
+    if (game.relaxed) setupRelaxedRoll(idx);
+    else if (dom.rollBtn) { dom.rollBtn.classList.add('hidden'); dom.rollBtn.onclick = null; }
 
     // Zustand merken, zu dem die Zurück-Taste diesen Zug zurücknimmt.
     pendingSnapshot = game.snapshot();

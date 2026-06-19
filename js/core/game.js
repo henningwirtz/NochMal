@@ -75,6 +75,26 @@ export class Game {
     return this.dice;
   }
 
+  // PvP/Notizblock: nächsten Markier-Turn vorbereiten, OHNE neu zu würfeln. Die
+  // Referenzwürfel bleiben stehen, bis der Mensch über den Würfeln-Button selbst
+  // neu würfelt (rollReference). Beim allerersten Mal wird einmal gewürfelt, damit
+  // überhaupt Würfel angezeigt werden.
+  beginRelaxedTurn() {
+    if (!this.dice) { this.dice = rollAll(this.soloMode); this.rollCount++; }
+    this.removedColorId = null;
+    this.removedNumberId = null;
+    this.roundLog = [];
+    this.order = [this.activeIndex];
+    this.pointer = 0;
+  }
+
+  // PvP/Notizblock: nur die Referenzwürfel neu würfeln (auf Knopfdruck), ohne den
+  // laufenden Markier-Turn zu beenden.
+  rollReference() {
+    this.dice = rollAll(this.soloMode);
+    this.rollCount++;
+  }
+
   get activePlayer() {
     return this.players[this.activeIndex];
   }

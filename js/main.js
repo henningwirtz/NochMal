@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 const $ = (id) => document.getElementById(id);
 
 // Versionsanzeige - hilft zu erkennen, ob die aktuelle (ungecachte) Version laeuft.
-const VERSION = '2.0 · Querformat';
+const VERSION = '2.1 · PvP-Würfeln';
 const buildBadge = $('build-badge');
 if (buildBadge) buildBadge.textContent = `Version ${VERSION}`;
 

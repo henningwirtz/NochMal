@@ -66,9 +66,11 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   Spielzustand ableitet, wer als Nächstes dran ist und ob Mensch oder KI:
   `presentRoll`/`presentChooser` (Mensch, interaktiv), `presentAiPhase`/`runAiPhase`
   (KI), `advance` (nach Mensch-Zug weiterschalten). **PvP/Notizblock (`relaxed`):**
-  KEIN separater Würfeln-Schritt – `present()` ruft hier ohne Klick `beginRound()`
-  (Referenzwürfel) und geht direkt zu `presentChooser`; man würfelt real am Tisch und
-  kreuzt sofort an. **KI-Phase:** alle direkt
+  eigener Ablauf über `presentRelaxed` – die Referenzwürfel **bleiben stehen**, bis man
+  über den **Würfeln-Button selbst neu würfelt** (`setupRelaxedRoll` → `game.rollReference()`,
+  würfelt animiert nur die Würfel neu, ohne den Markier-Turn zu beenden). Jeder Markier-
+  Turn wird mit `game.beginRelaxedTurn()` vorbereitet (setzt `order`/`pointer`, würfelt aber
+  NICHT neu – nur beim allerersten Mal einmal); angekreuzt wird frei (relaxed). **KI-Phase:** alle direkt
   aufeinanderfolgenden KI-Schritte (würfeln + wählen, auch über mehrere Runden) sind
   EINE Phase – `presentAiPhase` zeigt EINEN Knopf „▶ KI laufen lassen", `runAiPhase`
   führt dann die ganze Phase animiert aus (`aiRoll`/`aiChoose`), bis wieder ein Mensch
