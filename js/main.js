@@ -23,7 +23,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 const $ = (id) => document.getElementById(id);
 
 // Versionsanzeige - hilft zu erkennen, ob die aktuelle (ungecachte) Version laeuft.
-const VERSION = '2026-06-19 · Zurück-Taste (Zug für Zug zurückspringen, KI/Würfeln per Klick), Joker-Auswahl einreihig, kompaktere Buttons';
+const VERSION = '2026-06-19 · KI-Phase mit EINEM Klick („▶ KI laufen lassen“) bis du wieder dran bist + optionales Auto-Häkchen; Zurück-Taste bleibt erhalten';
 const buildBadge = $('build-badge');
 if (buildBadge) buildBadge.textContent = `Stand: ${VERSION}`;
 
@@ -52,6 +52,7 @@ if (saved) {
   if (saved.count) playerCountSel.value = String(saved.count);
   if (saved.difficulty) $('ai-difficulty').value = saved.difficulty;
   if (saved.aiSpeed) $('ai-speed').value = String(saved.aiSpeed);
+  if (saved.aiAuto) $('ai-auto').checked = true;
   if (saved.timerOn) $('timer-on').checked = true;
   if (saved.timerSeconds) $('timer-seconds').value = String(saved.timerSeconds);
   if (saved.mode === 'b') currentMode = 'b';
@@ -255,6 +256,7 @@ startBtn.addEventListener('click', () => {
   const notepad = currentMode === 'b';
   const aiDifficulty = $('ai-difficulty').value;
   const aiSpeed = parseFloat($('ai-speed').value) || 1;
+  const aiAuto = $('ai-auto').checked;
   const timerOn = $('timer-on').checked;
   const timerSeconds = Math.max(5, parseInt($('timer-seconds').value, 10) || 30);
 
@@ -283,12 +285,13 @@ startBtn.addEventListener('click', () => {
     count: parseInt(playerCountSel.value, 10),
     difficulty: aiDifficulty,
     aiSpeed,
+    aiAuto,
     timerOn,
     timerSeconds,
     slots: slots.map((s) => ({ name: s.name, isHuman: s.isHuman })),
   });
 
-  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed, relaxed });
+  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed, relaxed, aiAuto });
 
   $('setup-screen').classList.add('hidden');
   dom.endPanel.classList.add('hidden');

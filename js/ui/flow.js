@@ -3,8 +3,11 @@
 // Orchestriert den Spielablauf SCHRITTWEISE: Jeder Schritt (Würfeln, Zug eines
 // Spielers - auch der KI) wird per Klick ausgelöst. Vor jedem Zug wird ein
 // Schnappschuss gespeichert, sodass man mit der Zurück-Taste jederzeit Zug für
-// Zug zurückspringen kann. Mensch-Züge laufen interaktiv (controls.js), KI-Züge
-// werden vom Menschen angestoßen ("KI ziehen lassen") und dann animiert.
+// Zug zurückspringen kann. Mensch-Züge laufen interaktiv (controls.js). KI-Züge
+// werden als zusammenhängende "KI-Phase" gebündelt: EIN Klick ("▶ KI laufen
+// lassen") startet alle direkt aufeinanderfolgenden KI-Aktionen (würfeln +
+// wählen, auch über mehrere Runden) automatisch animiert, bis wieder ein Mensch
+// dran ist. Mit dem Auto-Häkchen (game.aiAuto) entfällt auch dieser eine Klick.
 // ============================================================================
 
 import { renderSheet } from './boardView.js';
@@ -32,6 +35,7 @@ export function runGame(game, dom) {
   let pendingSnapshot = null;  // Zustand, zu dem die aktuelle Entscheidung zurückkehrt
   let currentControl = null;   // laufender Mensch-Zug (zum Abbrechen bei Zurück/Beenden)
   let busy = false;            // sperrt Buttons während Würfel-/KI-Animationen
+  let pauseAuto = false;       // nach Zurück: KI-Phase NICHT automatisch starten (erst auf Klick)
 
   // "Spiel beenden": evtl. laufenden Mensch-Zug abbrechen; main.js geht ins Menü.
   dom.abortGame = () => {
@@ -55,12 +59,18 @@ export function runGame(game, dom) {
     if (!confirm('Zum vorherigen Zug zurück? Der zuletzt gemachte Zug wird zurückgesetzt.')) return;
     if (currentControl && currentControl.cancel) currentControl.cancel();
     currentControl = null;
+    // Nach Zurück die KI nicht sofort wieder selbst loslaufen lassen - sonst würde
+    // der zurückgenommene Zug im Auto-Modus direkt wieder gemacht. Erst auf Klick.
+    pauseAuto = true;
     game.restore(history.pop());
     announce(dom, '↩ Zurück: der letzte Zug wurde zurückgesetzt.');
     present();
   }
 
   // Zentrale Weiche: leitet aus dem Spielzustand ab, was als Nächstes zu tun ist.
+  // Mensch-Schritte (Würfeln/Wählen) laufen interaktiv; KI-Schritte werden als
+  // zusammenhängende "KI-Phase" gebündelt (presentAiPhase) und laufen automatisch
+  // ab, bis wieder ein Mensch an der Reihe ist.
   function present() {
     currentControl = null;
     // Spielende: regulär (2 Farben / alle Spalten) oder im Solo nach 30 Würfen.
@@ -70,28 +80,35 @@ export function runGame(game, dom) {
       return;
     }
     updateUndoButton();
-    if (game.isRoundComplete()) presentRoll();
-    else presentChooser();
+    if (game.isRoundComplete()) {
+      // Es muss gewürfelt werden: aktiver Spieler ist dran.
+      if (game.players[game.activeIndex].isHuman) presentRoll();
+      else presentAiPhase();
+    } else {
+      // Ein Spieler wählt aus den Würfeln.
+      if (game.players[game.currentChooserIndex()].isHuman) presentChooser();
+      else presentAiPhase();
+    }
   }
 
-  // Rundenbeginn: der aktive Spieler (Mensch ODER KI) würfelt auf Knopfdruck.
+  // Rundenbeginn: der aktive (menschliche) Spieler würfelt auf Knopfdruck.
   function presentRoll() {
+    pauseAuto = false;
     const active = game.players[game.activeIndex];
-    const aiTag = active.isHuman ? '' : ' (KI)';
-    setStatus(dom, `Wurf ${game.rollCount + 1} · Aktiv: ${active.name}${aiTag}`);
+    setStatus(dom, `Wurf ${game.rollCount + 1} · Aktiv: ${active.name}`);
     setTurnInfo(dom, active);
     renderBoards(dom, game, { chooserIdx: game.activeIndex });
     renderScoreboard(dom, game);
     dom.actionBar.replaceChildren();
     dom.diceTray.replaceChildren();
-    if (dom.commentary) dom.commentary.textContent = `${active.name}${aiTag} ist aktiv – zum Würfeln tippen.`;
+    if (dom.commentary) dom.commentary.textContent = `${active.name} ist aktiv – zum Würfeln tippen.`;
 
     const btn = dom.rollBtn;
     if (!btn) return;
     btn.classList.remove('hidden');
     btn.classList.add('ready');
     btn.disabled = false;
-    btn.textContent = active.isHuman ? '🎲 Würfeln' : `🎲 Für ${active.name} (KI) würfeln`;
+    btn.textContent = '🎲 Würfeln';
     btn.onclick = async () => {
       if (busy) return;
       busy = true;
@@ -99,19 +116,19 @@ export function runGame(game, dom) {
       btn.classList.remove('ready');
       updateUndoButton();
       game.beginRound();
-      announceRound(dom, `Wurf ${game.rollCount} · ${active.name}${aiTag} würfelt`);
+      announceRound(dom, `Wurf ${game.rollCount} · ${active.name} würfelt`);
       await animateRoll(dom, game, game.activeIndex);
       busy = false;
       present();
     };
   }
 
-  // Ein Spieler ist am Zug. Mensch: interaktiv. KI: per Klick anstoßen.
+  // Ein menschlicher Spieler ist am Zug (interaktiv).
   function presentChooser() {
+    pauseAuto = false;
     const idx = game.currentChooserIndex();
     const player = game.players[idx];
-    const aiTag = player.isHuman ? '' : ' (KI)';
-    setStatus(dom, `${player.name}${aiTag} ist am Zug`);
+    setStatus(dom, `${player.name} ist am Zug`);
     setTurnInfo(dom, player);
     renderBoards(dom, game, { chooserIdx: idx });
     renderScoreboard(dom, game);
@@ -121,18 +138,14 @@ export function runGame(game, dom) {
     pendingSnapshot = game.snapshot();
     updateUndoButton();
 
-    if (player.isHuman) {
-      renderDiceStatic(dom, game, idx);
-      const control = {};
-      currentControl = control;
-      humanTurn(game, idx, dom, (o) => renderBoards(dom, game, o), control).then((res) => {
-        if (res.action === 'abort') return; // durch Zurück/Beenden abgebrochen
-        currentControl = null;
-        applyHumanResult(idx, player, res);
-      });
-    } else {
-      presentAi(idx, player);
-    }
+    renderDiceStatic(dom, game, idx);
+    const control = {};
+    currentControl = control;
+    humanTurn(game, idx, dom, (o) => renderBoards(dom, game, o), control).then((res) => {
+      if (res.action === 'abort') return; // durch Zurück/Beenden abgebrochen
+      currentControl = null;
+      applyHumanResult(idx, player, res);
+    });
   }
 
   function applyHumanResult(idx, player, res) {
@@ -152,26 +165,95 @@ export function runGame(game, dom) {
     advance();
   }
 
-  // KI-Zug: erst auf Knopfdruck warten (so behält der Mensch die Kontrolle und
-  // kann jederzeit zurück), dann den Zug wie gewohnt animiert ausführen.
-  function presentAi(idx, player) {
-    renderDiceStatic(dom, game, idx);
+  // KI-Phase: alle DIREKT aufeinanderfolgenden KI-Schritte (Würfeln + Wählen,
+  // auch über mehrere Runden) gehören zusammen. Statt jeden Schritt einzeln
+  // anzustoßen, gibt es EINEN Knopf "▶ KI laufen lassen"; danach läuft die ganze
+  // Phase automatisch (sichtbar animiert) ab, bis wieder ein Mensch dran ist.
+  // Mit aktivem Auto-Häkchen (game.aiAuto) entfällt auch dieser eine Klick.
+  function presentAiPhase() {
+    const idx = game.isRoundComplete() ? game.activeIndex : game.currentChooserIndex();
+    const player = game.players[idx];
+    setStatus(dom, `${player.name} (KI) ist dran`);
+    setTurnInfo(dom, player);
+    renderBoards(dom, game, { chooserIdx: idx });
+    renderScoreboard(dom, game);
+    if (dom.rollBtn) { dom.rollBtn.classList.add('hidden'); dom.rollBtn.onclick = null; }
+    // Würfel zeigen, sofern die Runde schon läuft (gewürfelt wurde).
+    if (game.isRoundComplete()) dom.diceTray.replaceChildren();
+    else renderDiceStatic(dom, game, idx);
+    updateUndoButton();
+
+    // Auto-Modus: ohne Bestätigen direkt loslaufen - außer direkt nach "Zurück".
+    if (game.aiAuto && !pauseAuto) { runAiPhase(); return; }
+
     dom.actionBar.replaceChildren();
-    if (dom.commentary) dom.commentary.textContent = `${player.name} (KI) wartet – zum Ziehen tippen.`;
+    if (dom.commentary) dom.commentary.textContent = `${player.name} (KI) ist dran – zum Starten tippen.`;
     const btn = document.createElement('button');
     btn.className = 'primary';
-    btn.textContent = `🤖 ${player.name} (KI) ziehen lassen`;
-    btn.addEventListener('click', () => runAi(idx, player));
+    btn.textContent = '▶ KI laufen lassen';
+    btn.addEventListener('click', () => runAiPhase());
     dom.actionBar.append(btn);
   }
 
-  async function runAi(idx, player) {
+  // Führt die komplette KI-Phase animiert aus: würfeln und/oder wählen, so lange
+  // eine KI an der Reihe ist. Sobald ein Mensch dran ist oder das Spiel endet,
+  // wird angehalten und an present() zurückgegeben.
+  async function runAiPhase() {
     if (busy) return;
     busy = true;
+    pauseAuto = false;
     dom.actionBar.replaceChildren();
+    if (dom.rollBtn) { dom.rollBtn.classList.add('hidden'); dom.rollBtn.onclick = null; }
     updateUndoButton();
+
+    while (true) {
+      // Spielende (regulär oder Solo nach 30 Würfen) -> Phase beenden.
+      if (game.finished ||
+          (game.soloMode && game.rollCount >= SOLO_MAX_ROLLS && game.isRoundComplete())) {
+        break;
+      }
+      if (game.isRoundComplete()) {
+        // Es muss gewürfelt werden. Ist der aktive Spieler ein Mensch -> anhalten.
+        const active = game.players[game.activeIndex];
+        if (active.isHuman) break;
+        await aiRoll(active);
+      } else {
+        const idx = game.currentChooserIndex();
+        const player = game.players[idx];
+        if (player.isHuman) break;
+        await aiChoose(idx, player);
+        // Letzter Spieler der Runde war eine KI -> Runde auswerten.
+        if (game.isRoundComplete()) {
+          const log = game.resolveRound();
+          showRoundLog(dom, log);
+          renderScoreboard(dom, game);
+        }
+      }
+    }
+
+    busy = false;
+    present();
+  }
+
+  // Ein KI-Wurf: würfeln (beginRound) + Animation.
+  async function aiRoll(active) {
     const spd = game.aiSpeed || 1;
+    game.beginRound();
+    announceRound(dom, `Wurf ${game.rollCount} · ${active.name} (KI) würfelt`);
+    setStatus(dom, `${active.name} (KI) würfelt …`);
+    await animateRoll(dom, game, game.activeIndex);
+    await delay(300 * spd);
+  }
+
+  // Eine KI-Auswahl: Felder einzeln auswählen (wie ein Mensch), dann gemeinsam
+  // ankreuzen. Legt vorher einen Schnappschuss für die Zurück-Taste ab.
+  async function aiChoose(idx, player) {
+    const spd = game.aiSpeed || 1;
+    pendingSnapshot = game.snapshot();
+    renderBoards(dom, game, { chooserIdx: idx });
+    renderDiceStatic(dom, game, idx);
     setStatus(dom, `${player.name} (KI) überlegt …`);
+    if (dom.commentary) dom.commentary.textContent = `${player.name} (KI) überlegt …`;
     await delay(700 * spd);
 
     const move = chooseMove(player.sheet, game.availablePool(idx), game.aiDifficulty);
@@ -179,13 +261,11 @@ export function runGame(game, dom) {
       game.submitPass(idx);
       announce(dom, `${player.name} (KI) passt.`);
       await delay(500 * spd);
-      busy = false;
       history.push(pendingSnapshot);
-      advance();
+      renderScoreboard(dom, game);
       return;
     }
 
-    // Felder einzeln auswählen (wie ein Mensch), dann gemeinsam ankreuzen.
     setStatus(dom, `${player.name} (KI) kreuzt an: ${describeMove(move)}`);
     const selected = new Set();
     for (const [r, c] of move.cells) {
@@ -207,12 +287,11 @@ export function runGame(game, dom) {
     const highlight = new Set(move.cells.map(([r, c]) => `${r},${c}`));
     renderBoards(dom, game, { chooserIdx: idx, focusIdx: idx, highlight });
     await delay(700 * spd);
-    busy = false;
     history.push(pendingSnapshot);
-    advance();
+    renderScoreboard(dom, game);
   }
 
-  // Nach einem Zug weiterschalten: nächster Chooser oder Runde auswerten.
+  // Nach einem Mensch-Zug weiterschalten: nächster Chooser oder Runde auswerten.
   function advance() {
     renderScoreboard(dom, game);
     if (!game.isRoundComplete()) { present(); return; }

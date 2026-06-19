@@ -53,18 +53,26 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   `dice.js`, `rules.js` (legale Platzierungen; `isRelaxedPlacement` für den Notizblock-
   Modus: unabhängig von den Würfeln, aber regelkonform – zusammenhängend, verankert,
   **nur eine Farbe pro Zug**, max. 5 Felder), `sheet.js` (ein Spielblatt + Wertung),
-  `game.js` (Rundenautomat; Optionen `aiDifficulty`, `relaxed`; `submitMarks` kreuzt im
-  Notizblock-Modus frei gewählte, regelkonform erreichbare Felder ohne Würfel-Prüfung an),
+  `game.js` (Rundenautomat; Optionen `aiDifficulty`, `relaxed`, `aiAuto`; `submitMarks`
+  kreuzt im Notizblock-Modus frei gewählte, regelkonform erreichbare Felder ohne
+  Würfel-Prüfung an),
   `ai.js` (Heuristik-KI,
   `chooseMove(sheet, pool, difficulty)`; Stufen `leicht`/`mittel`/`schwer` über `CFG`,
   die die strategische Gewichtung skalieren).
 - `js/ui/` – Rendering & Ablauf: `boardView.js` (`renderSheet` = ein Blatt),
-  `flow.js` (`runGame` = **schrittweiser, event-gesteuerter Ablauf**: jeder Schritt –
-  Würfeln, Zug eines Spielers, auch der KI – wird per Klick ausgelöst; `present()` ist die
-  zentrale Weiche, die aus dem Spielzustand ableitet, was als Nächstes dran ist
-  (`presentRoll`/`presentChooser`/`presentAi`/`runAi`/`advance`). Vor jedem Zug wird ein
-  `game.snapshot()` in den `history`-Stack gelegt, die Zurück-Taste (`onUndo`) stellt den
-  vorigen Zustand wieder her. `renderBoards` = alle Spieler-Blöcke gleichzeitig,
+  `flow.js` (`runGame` = **event-gesteuerter Ablauf**: Mensch-Schritte (Würfeln, Zug)
+  werden per Klick ausgelöst; `present()` ist die zentrale Weiche, die aus dem
+  Spielzustand ableitet, wer als Nächstes dran ist und ob Mensch oder KI:
+  `presentRoll`/`presentChooser` (Mensch, interaktiv), `presentAiPhase`/`runAiPhase`
+  (KI), `advance` (nach Mensch-Zug weiterschalten). **KI-Phase:** alle direkt
+  aufeinanderfolgenden KI-Schritte (würfeln + wählen, auch über mehrere Runden) sind
+  EINE Phase – `presentAiPhase` zeigt EINEN Knopf „▶ KI laufen lassen", `runAiPhase`
+  führt dann die ganze Phase animiert aus (`aiRoll`/`aiChoose`), bis wieder ein Mensch
+  dran ist oder das Spiel endet. Mit dem Auto-Häkchen (`game.aiAuto`) entfällt der eine
+  Klick und die Phase startet von selbst – außer direkt nach „Zurück" (`pauseAuto`),
+  damit der zurückgenommene KI-Zug nicht sofort wieder gemacht wird. Vor jedem Zug wird
+  ein `game.snapshot()` in den `history`-Stack gelegt, die Zurück-Taste (`onUndo`) stellt
+  den vorigen Zustand wieder her. `renderBoards` = alle Spieler-Blöcke gleichzeitig,
   Log/Ansagen, inline Endwertung), `controls.js` (`humanTurn` = interaktiver Zug,
   nur eigener Block anklickbar; „↶ Feld zurück" wählt einzelne gewählte Felder VOR dem
   Bestätigen wieder ab + optionaler Zug-Timer),
@@ -95,12 +103,18 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 ### Konventionen
 - Farbcodes im Raster: `y`=gelb, `n`=grün, `b`=blau, `r`=rot/pink, `o`=orange.
 - Jeder Spieler hat ein eigenes `Sheet`; alle Blöcke sind gleichzeitig sichtbar, der
-  aktive ist hervorgehoben. **Jeder Schritt wird vom Menschen ausgelöst** – auch das
-  Würfeln (Würfeln-Button, Beschriftung „Für … (KI) würfeln" bei aktiver KI) und der
-  KI-Zug („🤖 … ziehen lassen"). Das ist Voraussetzung für die Zurück-Taste: der Ablauf
-  rennt nicht von allein weiter. KI-Züge laufen dann über `runAi` in `flow.js` – bewusst
-  langsam und nachvollziehbar: Felder werden einzeln ausgewählt (wie ein Mensch) und dann
-  gemeinsam angekreuzt. Schwierigkeit kommt aus `game.aiDifficulty`.
+  aktive ist hervorgehoben. **Mensch-Schritte werden per Klick ausgelöst** (eigenes
+  Würfeln, eigener Zug). **KI-Schritte sind zu einer KI-Phase gebündelt:** EIN Klick
+  auf „▶ KI laufen lassen" (`presentAiPhase`) startet alle direkt aufeinanderfolgenden
+  KI-Aktionen – würfeln UND wählen, auch über mehrere Runden – und sie laufen über
+  `runAiPhase` automatisch ab, bis wieder ein Mensch dran ist oder das Spiel endet.
+  Das **Auto-Häkchen** (`game.aiAuto`, Setup-Checkbox `#ai-auto`) lässt diesen einen
+  Klick weg: die Phase startet von selbst (außer direkt nach „Zurück", siehe `pauseAuto`).
+  KI-Züge bleiben bewusst langsam und nachvollziehbar (`aiSpeed`): Felder werden einzeln
+  ausgewählt (wie ein Mensch, `aiChoose`) und dann gemeinsam angekreuzt. Schwierigkeit
+  kommt aus `game.aiDifficulty`. Die Zurück-Taste bleibt erhalten, weil `runAiPhase` vor
+  jedem KI-Zug weiterhin einen `snapshot()` ablegt (während die Phase läuft, ist sie
+  über `busy` gesperrt).
 - **Zurück-Taste „↩ Zug zurück" (`#undo-btn`):** während des ganzen Spiels sichtbar,
   nimmt nach kurzer Rückfrage den ZULETZT gemachten Zug zurück (egal ob eigener oder
   KI-Zug) und springt so Zug für Zug zurück. Technisch: `flow.js` legt vor jedem Zug
@@ -132,7 +146,8 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 - KI-Tempo: `game.aiSpeed` (Faktor auf die Pausen in `runAi`; >1 langsamer, <1 schneller).
 - Hell/Dunkel: `body.light` überschreibt die CSS-Variablen; Theme + Mute liegen in
   `prefs` (localStorage) und werden sofort beim Umschalten gespeichert.
-- Setup merkt sich Spielernamen, Anzahl, KI-Stärke, KI-Tempo und Timer (localStorage).
+- Setup merkt sich Spielernamen, Anzahl, KI-Stärke, KI-Tempo, KI-Auto-Häkchen und
+  Timer (localStorage).
 - Bestenliste ist über das ⚙-Symbol bearbeitbar: schaltet einen Bearbeiten-Modus ein,
   in dem einzelne Einträge (`removeScoreAt`) oder alle (`clearScores`) entfernt werden.
 - Code-Kommentare und UI-Texte sind auf Deutsch.

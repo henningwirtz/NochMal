@@ -25,7 +25,7 @@ import { Sheet } from './sheet.js';
 import { isValidPlacement, isRelaxedPlacement } from './rules.js';
 
 export class Game {
-  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1, relaxed = false } = {}) {
+  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1, relaxed = false, aiAuto = false } = {}) {
     // playerConfigs: [{ name, isHuman }]
     this.players = playerConfigs.map((p, i) => ({
       id: i,
@@ -38,6 +38,7 @@ export class Game {
     this.aiDifficulty = aiDifficulty;
     this.moveTimer = moveTimer; // Sekunden je Mensch-Zug (0 = aus)
     this.aiSpeed = aiSpeed;     // Faktor auf KI-Pausen (1 = normal, >1 langsamer)
+    this.aiAuto = aiAuto;       // true = KI-Phasen ohne Bestätigungsklick automatisch starten
     this.activeIndex = 0;
     this.rollCount = 0;
 
