@@ -8,4 +8,4 @@
 // So muss die Version nur HIER hochgezaehlt werden; der Offline-Cache
 // invalidiert automatisch mit, weil sein Name aus dieser Zeichenkette entsteht.
 // Kurzer, sprechender Name (z. B. '2.2 · Aufraeumen').
-self.APP_VERSION = '3.4 · Leopold spielt sauberer & lästert über dich';
+self.APP_VERSION = '3.5 · Grüner Rahmen für den aktiven Spieler';

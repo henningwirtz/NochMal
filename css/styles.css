@@ -239,10 +239,11 @@ body.mode-notepad .dice-group { flex-wrap: wrap; }
   max-width: 100%;
   overflow-x: auto;
 }
-.player-board.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
-/* Wer NICHT am Zug ist, bekommt einen gelben Rahmen - so sind aktiv (orange) und
-   inaktiv (gelb) ohne extra "am Zug"-Text unterscheidbar. */
-.player-board:not(.active) { border-color: #ffd23f; }
+.player-board.active { border-color: #2ecc71; box-shadow: 0 0 0 2px #2ecc71 inset; }
+/* Wer NICHT am Zug ist, bekommt einen gelben Rahmen - so sind aktiv (gruen) und
+   inaktiv (gelb) ohne extra "am Zug"-Text unterscheidbar. Der gelbe Rahmen hat den
+   gleichen 2px-Innenschatten wie der gruene, damit beide exakt gleich gross sind. */
+.player-board:not(.active) { border-color: #ffd23f; box-shadow: 0 0 0 2px #ffd23f inset; }
 .pb-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
 .pb-name { font-weight: 800; }
 .pb-score { color: var(--accent); font-weight: 800; }
@@ -393,7 +394,7 @@ button.die:not(.disabled):hover { transform: translateY(-2px); box-shadow: 0 4px
 .pb-score, .sr-total { font-variant-numeric: tabular-nums; }
 
 .player-board { transition: border-color .2s, box-shadow .2s; }
-.player-board.active { box-shadow: 0 0 0 2px var(--accent) inset, 0 0 18px #f08a1d44; }
+.player-board.active { box-shadow: 0 0 0 2px #2ecc71 inset, 0 0 18px #2ecc7144; }
 
 .cell { transition: box-shadow .12s, outline-color .12s, filter .12s; }
 .cell.highlight, .cell.selected { cursor: pointer; }
