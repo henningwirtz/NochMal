@@ -131,6 +131,28 @@ button.big { font-size: 1.1rem; padding: 12px 24px; margin-top: 10px; }
 }
 .end-game-btn:hover { background: #7a3636; }
 
+/* Auswahl beim "Spiel beenden": mit oder ohne Wertung (kleines Overlay in der Mitte). */
+.end-choice {
+  position: fixed; inset: 0; z-index: 9998;
+  display: flex; align-items: center; justify-content: center;
+  background: #000000aa; padding: 20px;
+}
+.end-choice.hidden { display: none; }
+.end-choice-box {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 20px; display: flex; flex-direction: column; gap: 10px;
+  min-width: 240px; max-width: 90vw; text-align: center;
+  box-shadow: 0 10px 40px #000a;
+}
+.end-choice-box p { margin: 0 0 4px; font-size: 1.15rem; font-weight: 700; }
+.end-choice-box button {
+  padding: 12px 16px; font-size: 1rem; font-weight: 700; border-radius: 8px; cursor: pointer;
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+}
+.end-choice-box button.primary { background: var(--accent); color: #1a1a1a; border: none; }
+.end-choice-box button.ghost { background: transparent; color: var(--muted); }
+.end-choice-box button:hover { filter: brightness(1.08); }
+
 /* ---------- Dice ---------- */
 .dice-tray { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 12px 0; min-height: 48px; }
 .dice-group, .joker-picker { display: flex; gap: 6px; align-items: center; }
@@ -280,7 +302,9 @@ body.mode-notepad .dice-group { flex-wrap: wrap; }
   text-shadow: 0 0 3px #ffffffe0, 0 0 4px #ffffffb0, -1px -1px 0 #ffffff99, 1px 1px 0 #ffffff99;
 }
 .cell.highlight { outline: 3px solid #ffffff; outline-offset: -2px; cursor: pointer; }
-.cell.selected { outline: 3px solid var(--accent); outline-offset: -2px; cursor: pointer; }
+/* Ausgewähltes Feld: oranger Rahmen PLUS weißer Innenring. So bleibt die Auswahl
+   auch auf orangenen Feldern (wo der orange Rahmen sonst verschwindet) klar sichtbar. */
+.cell.selected { outline: 3px solid var(--accent); outline-offset: -2px; box-shadow: inset 0 0 0 3px #fff; cursor: pointer; }
 
 .col-score {
   height: 22px; display: flex; align-items: center; justify-content: center;

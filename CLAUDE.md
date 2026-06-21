@@ -245,15 +245,21 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 - KI-Modus: gleiche Punkteanzeige-Idee – auf Handybreite (`@media max-width: 760px`) steht
   das Wertungspanel (`.side-panel`) ebenfalls als kompakte Reihe unter dem Raster (Farb-
   Bonus + Joker + Punkte nebeneinander), damit jeder Block weniger Höhe braucht.
-- „Spiel beenden" (`#end-game-btn` im Spiel-Header): verwirft das laufende Spiel und
-  geht zurück ins Menü. Im Querformat (Touch) sitzt der (kleinere) Knopf via
+- „Spiel beenden" (`#end-game-btn` im Spiel-Header): öffnet ein kleines Overlay
+  (`#end-choice`, mittig, `position: fixed`) mit ZWEI Optionen statt sofort zu verwerfen:
+  **„Werten & beenden"** (`#end-score-btn` → `dom.scoreAndEnd`) beendet das Spiel mit dem
+  AKTUELLEN Punktestand – `finishGame`/`showEnd` zeigt die Endwertung und schreibt alle
+  Blöcke in die Bestenliste (wichtig im PvP/Notizblock, wenn ein Mitspieler schon 2 Farben
+  voll hat, man selbst aber noch nicht – der eigene Stand geht NICHT verloren). **„Ohne
+  Wertung beenden"** (`#end-discard-btn` → `dom.abortGame`) verwirft wie bisher und geht
+  zurück ins Menü (kein Eintrag). „Abbrechen" (`#end-cancel-btn`) schließt nur das Overlay.
+  Im Querformat (Touch) sitzt der (kleinere) „Spiel beenden"-Knopf via
   `grid-area: ctl` ganz oben links in der rechten Steuerspalte; die beiden Theme/Ton-Icons
   (`#top-controls`) werden beim Spielstart per JS in die `.game-header` verschoben und
   teilen sich dann als echte Grid-Geschwister dieselbe `ctl`-Reihe rechts daneben (s. o.).
-  `runGame` setzt dazu `dom.abortGame`; weil der Ablauf
+  `runGame` setzt dazu `dom.abortGame` und `dom.scoreAndEnd`; weil der Ablauf
   event-gesteuert ist (keine durchlaufende Schleife), bricht es nur einen evtl. gerade
-  laufenden Mensch-Zug ab (`currentControl.cancel`, liefert `{ action:'abort' }`). Danach
-  geht `main.js` zurück ins Menü (kein Eintrag in der Bestenliste).
+  laufenden Mensch-Zug ab (`currentControl.cancel`, liefert `{ action:'abort' }`).
 - Bestenliste „immer aktuell": `main.js` rendert sie neu bei Spielende/Menü-Rückkehr,
   zusätzlich über ein `storage`-Event (Updates aus anderen Tabs/Fenstern, `SCORES_KEY`
   aus `storage.js`) sowie bei `visibilitychange`/`focus` (PWA aus dem Hintergrund).

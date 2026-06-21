@@ -246,13 +246,25 @@ const dom = {
   backToSetup,
 };
 
-// "Spiel beenden": laufendes Spiel verwerfen und zurueck ins Menue. runGame setzt
-// dom.abortGame, das die Spielschleife sauber stoppt (kein Eintrag in der Bestenliste).
+// "Spiel beenden": kleine Auswahl einblenden - WERTEN & beenden (Punktestand kommt in
+// die Bestenliste, Endwertung wird gezeigt; wichtig im PvP, wenn ein Mitspieler schon
+// fertig ist) ODER ohne Wertung beenden (Spielstand verwerfen, zurueck ins Menue).
 $('end-game-btn').addEventListener('click', () => {
-  if (confirm('Spiel wirklich beenden? Der aktuelle Spielstand geht verloren.')) {
-    if (dom.abortGame) dom.abortGame();
-    backToSetup();
-  }
+  $('end-choice').classList.remove('hidden');
+});
+$('end-cancel-btn').addEventListener('click', () => {
+  $('end-choice').classList.add('hidden');
+});
+// Werten & beenden: runGame liefert dom.scoreAndEnd -> Endwertung + Bestenliste.
+$('end-score-btn').addEventListener('click', () => {
+  $('end-choice').classList.add('hidden');
+  if (dom.scoreAndEnd) dom.scoreAndEnd();
+});
+// Ohne Wertung beenden: laufenden Zug abbrechen und zurueck ins Menue (kein Eintrag).
+$('end-discard-btn').addEventListener('click', () => {
+  $('end-choice').classList.add('hidden');
+  if (dom.abortGame) dom.abortGame();
+  backToSetup();
 });
 
 startBtn.addEventListener('click', () => {

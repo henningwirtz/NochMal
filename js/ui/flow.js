@@ -44,6 +44,16 @@ export function runGame(game, dom) {
     currentControl = null;
   };
 
+  // "Werten & beenden": das Spiel SOFORT mit dem aktuellen Punktestand beenden -
+  // die Endwertung erscheint und alle Ergebnisse kommen in die Bestenliste (wichtig
+  // im PvP, wenn ein Mitspieler schon fertig ist, man selbst aber noch nicht alle
+  // Farben voll hat). Anders als abortGame wird der Spielstand also NICHT verworfen.
+  dom.scoreAndEnd = () => {
+    if (currentControl && currentControl.cancel) currentControl.cancel();
+    currentControl = null;
+    finishGame();
+  };
+
   // Zurück-Taste (liegt im HTML, ist während des ganzen Spiels sichtbar).
   if (dom.undoBtn) dom.undoBtn.onclick = onUndo;
 
