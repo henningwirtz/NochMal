@@ -72,11 +72,19 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   nach außen bauen; Mitte teuer = sparen/passen; ab ~70 % Füllung billig, damit Joker
   Spalten schließen; die letzten 2 bis zum Endspiel reserviert – im Test: bei 50 %
   Brett-Füllung noch ~4 von 8 Jokern übrig statt früher fast alle weg).
-  **Sauber füllen, keine Reste** (`strandBadness`, als Differenz vorher/nachher: Strafe je
-  liegengelassenem Feld einer **kleinen Gruppe ≤5**, Einzelfeld ohne freien gleichfarbigen
-  Nachbarn zählt schwerer; **Gruppen mit 6+ Feldern bleiben straffrei** – die kann man nie
-  in einem Zug füllen; `computeRegionSizes` liefert die Gruppengrößen je Farbe). Der
-  `frontier`-Mobilitätsbonus ist für Leopold aus (er belohnte Lücken).
+  **Sauber füllen, keine Reste** (`fragmentBadness`, als Differenz vorher/nachher um den
+  Zug herum): bewertet die aktuell **freien** zusammenhängenden Fragmente einer Farbe –
+  je kleiner ein freier Rest, desto höher die Strafe (`FRAGMENT_WEIGHT` nach Größe:
+  1→4.0, 2→2.2, 3→1.0, 4→0.4, 5→0.15, **ab 6 straffrei** – große Gruppen kann man eh nicht
+  in einem Zug füllen). Entscheidend ist der **marginale** Effekt (`strand` =
+  `fragmentBadness` nachher − vorher, `cfg.strand` für `schwer` = 3.0): ein Zug, der einen
+  1er-/2er-Rest NEU erzeugt, wird hart bestraft (z. B. eine 6er-Gruppe mit einem 4er-Zug so
+  zerschneiden, dass ein unbrauchbares 2er-Loch bleibt – das war früher straffrei, jetzt
+  teuer); ein Zug, der einen kleinen Rest **sauber wegfüllt**, bekommt einen Bonus. So
+  strandet Leopold praktisch keine Felder mehr – außer der Zug schließt eine Spalte (dann
+  überwiegt der große `complete`/Spaltenwert-Bonus den Strand-Abzug; genau die gewünschte
+  Endspiel-Ausnahme, ohne Sonderfall). Der `frontier`-Mobilitätsbonus ist für Leopold aus
+  (er belohnte Lücken).
   **Außenspalten** (Fortschritt × Spaltenwert, quadratisch → wertvolle Ränder A/O zuerst,
   früh verstärkt). **Defensive** (`denialBonus`, nur am eigenen/aktiven Zug: verbraucht
   bevorzugt den **einzigen** Würfel einer Farbe, die der stärkste Gegner braucht – die
@@ -85,7 +93,8 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   Diese Terme brauchen `ctx` = `{ opponents, isActive, scoreDiff, leaderName }`, das
   `flow.js` per `buildAiContext` baut; ohne `ctx` (z.B. Sim/Tests) spielt die KI rein auf
   das eigene Blatt, `leicht`/`mittel` sind unverändert (neue Gewichte dort 0, Joker-Strafe
-  flach). Headless-Bench: Leopold ~80 % Siege gg. „mittel". Leopold kommentiert frech und
+  flach). Headless-Bench: Leopold ~89 % Siege gg. „mittel" und lässt am Ende deutlich
+  weniger kleine 1er/2er-Reste liegen (~4 statt ~12). Leopold kommentiert frech und
   abwechslungsreich: `classifyMove` ordnet den gewählten Zug einer Situation zu
   (`fastEnd`/`denial`/`outer`/`color`/`behind`/`ahead`/`star`/`joker`/`big`/`lean`/`pass`),
   `leopoldThinking`/`leopoldComment` ziehen daraus einen Spruch aus `LINES` (spricht den
@@ -97,6 +106,18 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   Schritten – erst ein Denk-/Scan-Spruch (`leopoldThinking`) mit Lesepause, dann der
   Entscheidungs-Spruch (`leopoldComment`) und ERST danach das Ankreuzen; ab Normal-Tempo
   bleibt es bei EINEM (dem Entscheidungs-)Spruch ohne Extra-Pause).
+  **Leopold verspottet auch DEINE Züge** (`leopoldReactToHuman` in `ai.js`): nach fast
+  jedem menschlichen Zug ein frecher, konkret auf den Zug bezogener Spruch. `classifyHumanMove`
+  ordnet den Zug ein – `humanStrand` (du lässt einen kaum füllbaren 1er/2er-Rest liegen,
+  erkannt über dieselbe `fragmentBadness`-Differenz → härtester Spott), `humanJokerWaste`
+  (Joker für einen Mini-Zug), `humanLean` (nur 1 Feld), `humanGood` (Spalte/Farbe
+  abgeschlossen → zähneknirschendes Lob), `humanBig` (≥4 sauber), `humanPass`, sonst
+  `humanMeh` (fader Standardzug). Die Sprüche stehen in `LINES.human*` (`{name}` = **dein**
+  Name); auffällige Situationen liefern immer einen Spruch, bei `humanMeh` zu ~75 % ein
+  `humanGeneral`-Spott, sonst schweigt er. Nur aktiv, wenn **Leopold ('schwer')** als KI im
+  Spiel ist (nicht im PvP/Notizblock, nicht bei leicht/mittel) – `flow.js` `applyHumanResult`
+  bestimmt den Spruch VOR dem Anwenden (Blatt noch im Vor-Zug-Zustand), zeigt ihn dann mit
+  kurzer Lesepause (≈1,3 s × `aiSpeed`) im Kommentarfeld, bevor es weitergeht.
 - `js/ui/` – Rendering & Ablauf: `boardView.js` (`renderSheet` = ein Blatt),
   `flow.js` (`runGame` = **event-gesteuerter Ablauf**: Mensch-Schritte (Würfeln, Zug)
   werden per Klick ausgelöst; `present()` ist die zentrale Weiche, die aus dem
@@ -306,9 +327,11 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 - **Kommentarbox (`#commentary`) ist Spaß-only:** sie zeigt NUR Leopolds Sprüche.
   Spieltechnische Hinweise stehen dort nicht mehr – `setHint` (`controls.js`) schreibt nur
   noch in `#message`, `announce`/`present`/`presentRoll`/`presentAiPhase` (`flow.js`)
-  schreiben nicht mehr hinein bzw. leeren sie. Bei anderen KIs/PvP/Mensch-Zug bleibt sie
+  schreiben nicht mehr hinein bzw. leeren sie. Bei anderen KIs/reinem PvP bleibt sie
   leer (`present()` leert sie zu Beginn jedes Schritts; innerhalb einer KI-Phase läuft
-  `runAiPhase` ohne `present()`, Leopolds Text bleibt also stehen). Statuszeile
+  `runAiPhase` ohne `present()`, Leopolds Text bleibt also stehen). **Ausnahme – Mensch-Zug
+  mit Leopold im Spiel:** `applyHumanResult` zeigt dort Leopolds Spott auf den eigenen Zug
+  (`leopoldReactToHuman`, siehe oben). Statuszeile
   (`#status-bar`) und Log (`#log`) bleiben als sachliche Info erhalten.
 - Hell/Dunkel: `body.light` überschreibt die CSS-Variablen; Theme + Mute liegen in
   `prefs` (localStorage) und werden sofort beim Umschalten gespeichert.

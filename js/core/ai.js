@@ -57,25 +57,28 @@ const CFG = {
   mittel: { strat: 0.85, complete: 1.5, joker: 1.2, jitter: 1.0, frontier: 1,
             strand: 0, outer: 0, defense: 0, endgame: 0, jokerPhase: false, jokerReserve: 0 },
   schwer: { strat: 2.40, complete: 6, joker: 5, jitter: 0, frontier: 0,
-            strand: 2.2, outer: 0.6, defense: 2.0, endgame: 4.0, jokerPhase: true, jokerReserve: 4 },
+            strand: 3.0, outer: 0.6, defense: 2.0, endgame: 4.0, jokerPhase: true, jokerReserve: 4 },
 };
 
-// Regionsgroessen einer Farbe: fuer jedes noch FREIE Feld dieser Farbe die Groesse
-// der zusammenhaengenden gleichfarbigen Gruppe, zu der es gehoert. Damit erkennt
-// Leopold, ob eine Gruppe klein (<=5, sollte sauber gefuellt werden) oder gross
-// (6+, Anschneiden ist normal) ist. Wird je Farbe einmal berechnet.
-function computeRegionSizes(sheet, color) {
-  const size = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(0));
+// "Schlechtigkeit" der aktuell FREIEN Fragmente einer Farbe: je kleiner ein
+// zusammenhaengendes freies Stueck dieser Farbe, desto schlechter (winzige Reste
+// brauchen exakt die passende Augenzahl, ein Einzelfeld die exakte 1). Grosse
+// Gruppen (6+) sind normal -> straffrei. Wird in evaluatePlacement VOR und NACH
+// dem Zug aufgerufen; die Differenz misst, wie viel kleinen Rest der Zug NEU
+// erzeugt (positiv = schlecht) bzw. sauber wegfuellt (negativ = gut).
+const FRAGMENT_WEIGHT = [0, 4.0, 2.2, 1.0, 0.4, 0.15]; // Index = Fragmentgroesse
+function fragmentBadness(sheet, color) {
   const seen = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(false));
+  let bad = 0;
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
       if (seen[r][c] || sheet.marks[r][c] || GRID[r][c] !== color) continue;
-      const comp = [];
+      let size = 0;
       const stack = [[r, c]];
       seen[r][c] = true;
       while (stack.length) {
         const [cr, cc] = stack.pop();
-        comp.push([cr, cc]);
+        size++;
         for (const [dr, dc] of DIRS) {
           const nr = cr + dr;
           const nc = cc + dc;
@@ -86,10 +89,10 @@ function computeRegionSizes(sheet, color) {
           }
         }
       }
-      for (const [er, ec] of comp) size[er][ec] = comp.length;
+      bad += FRAGMENT_WEIGHT[size] || 0; // ab Groesse 6 straffrei
     }
   }
-  return size;
+  return bad;
 }
 
 // Wie sehr "begehrt" ein Gegner diese Farbe? Naeher an komplett = will sie mehr.
@@ -132,35 +135,10 @@ function jokerPenalty(jokersUsed, jokersLeft, filled, advancesOuter, cfg) {
   return perJoker * jokersUsed;
 }
 
-// Summe der "Rest-Schlechtigkeit" einer Farbe im aktuellen Markierungs-Zustand:
-// je liegengelassenem Feld einer KLEINEN Gruppe (<=5) ein Gewicht - Einzelfeld
-// ohne freien gleichfarbigen Nachbarn (Waise) zaehlt schwerer. Grosse Gruppen
-// (6+) bleiben unbestraft (Anschneiden ist normal). regionSize ist vor dem Zug
-// berechnet; die Differenz vorher/nachher isoliert die Wirkung des Zugs.
-function strandBadness(sheet, color, regionSize) {
-  let bad = 0;
-  for (let r = 0; r < GRID_ROWS; r++) {
-    for (let c = 0; c < GRID_COLS; c++) {
-      if (sheet.marks[r][c] || GRID[r][c] !== color) continue;
-      const s = regionSize[r][c];
-      if (s === 0 || s > 5) continue;
-      let lonely = true;
-      for (const [dr, dc] of DIRS) {
-        const nr = r + dr;
-        const nc = c + dc;
-        if (nr >= 0 && nr < GRID_ROWS && nc >= 0 && nc < GRID_COLS
-            && !sheet.marks[nr][nc] && GRID[nr][nc] === color) { lonely = false; break; }
-      }
-      bad += lonely ? 1.5 : 0.5;
-    }
-  }
-  return bad;
-}
-
 // Bewertet eine konkrete Platzierung. Markiert temporaer und macht rueckgaengig.
-// info = { filled, regionSize } (einmal je Zug vorberechnet).
+// info = { filled } (einmal je Zug vorberechnet).
 function evaluatePlacement(sheet, cells, color, jokersUsed, cfg, ctx, info) {
-  const strandBefore = cfg.strand ? strandBadness(sheet, color, info.regionSize) : 0;
+  const strandBefore = cfg.strand ? fragmentBadness(sheet, color) : 0;
 
   for (const [r, c] of cells) sheet.marks[r][c] = true;
 
@@ -207,9 +185,9 @@ function evaluatePlacement(sheet, cells, color, jokersUsed, cfg, ctx, info) {
   }
 
   // --- Leopold-Zusatzterme (bei leicht/mittel sind die Gewichte 0) -----------
-  // (4) Sauber fuellen: bestrafe NEU liegengelassene Felder kleiner (<=5) Gruppen
-  // (Differenz nachher - vorher). Negativ, wenn der Zug Reste sauber wegfuellt.
-  const strand = cfg.strand ? strandBadness(sheet, color, info.regionSize) - strandBefore : 0;
+  // (4) Sauber fuellen: bestrafe NEU erzeugte kleine freie Fragmente (Differenz
+  // nachher - vorher). Negativ, wenn der Zug einen kleinen Rest sauber wegfuellt.
+  const strand = cfg.strand ? fragmentBadness(sheet, color) - strandBefore : 0;
 
   // (5) Aussenspalten: Fortschritt in noch offenen Spalten, gewichtet mit dem
   // Spaltenwert (Rand = 5, Mitte = 1) und quadratisch (fast-fertige zuerst);
@@ -273,20 +251,14 @@ export function chooseMove(sheet, pool, difficulty = 'mittel', ctx = {}) {
 
   const filled = filledFraction(sheet);
 
-  // Gueltige Platzierungen UND Regionsgroessen haengen nur von (Farbe[,Anzahl]) und
-  // dem - waehrend der Bewertung unveraenderten - Blatt ab -> einmal merken.
+  // Gueltige Platzierungen haengen nur von (Farbe[,Anzahl]) und dem - waehrend der
+  // Bewertung unveraenderten - Blatt ab -> einmal merken.
   const placementCache = new Map(); // "color,count" -> Platzierungen
   const placementsFor = (color, count) => {
     const k = `${color},${count}`;
     let p = placementCache.get(k);
     if (!p) { p = legalPlacements(sheet, color, count); placementCache.set(k, p); }
     return p;
-  };
-  const regionCache = new Map(); // color -> Regionsgroessen-Gitter
-  const regionsFor = (color) => {
-    let g = regionCache.get(color);
-    if (!g) { g = cfg.strand ? computeRegionSizes(sheet, color) : null; regionCache.set(color, g); }
-    return g;
   };
 
   for (const cDie of pool.colorDice) {
@@ -297,7 +269,7 @@ export function chooseMove(sheet, pool, difficulty = 'mittel', ctx = {}) {
           const jokersUsed = co.jokers + no.jokers;
           if (jokersUsed > sheet.jokersRemaining()) continue;
 
-          const info = { filled, regionSize: regionsFor(co.color) };
+          const info = { filled };
           const placements = placementsFor(co.color, no.count);
           for (const cells of placements) {
             let s = evaluatePlacement(sheet, cells, co.color, jokersUsed, cfg, ctx, info) + denial;
@@ -489,6 +461,69 @@ const LINES = {
     'Locker aus dem Handgelenk.',
     'Wer braucht schon Glück, wenn er mich hat.',
   ],
+
+  // --- Spott auf den MENSCHLICHEN Zug. {name} = Name des Menschen. ----------
+  // Erzeugt ein winziges, kaum füllbares Restfeld (1er/2er-Lücke) - haertester Spott.
+  humanStrand: [
+    'Stark, {name}! Da fehlt jetzt genau EIN Feld – viel Glück mit dem exakten Würfel.',
+    '{name}, hast du gesehen, was du da liegen lässt? Den Rest füllst du nie.',
+    'Mutig, {name}. Diese Lücke braucht punktgenau die richtige Zahl. Toi, toi, toi.',
+    'Aua. {name}, dieses einsame Restfeld weint schon.',
+    'Klasse Plan, {name}: lauter winzige Löcher, die keiner mehr stopft.',
+    'Genau so macht man es NICHT, {name}. Aber bitte, weiter so.',
+    'Oh, {name} sägt sich die Farbe selbst kaputt. Sehr großzügig.',
+  ],
+  // Joker fuer einen Mini-Zug verbraucht.
+  humanJokerWaste: [
+    'Einen Joker für DAS, {name}? Mutige Verschwendung.',
+    '{name} ballert den Joker raus – für ein, zwei Feldchen. Respekt? Nein.',
+    'Joker für so wenig, {name}? Den spart man sich eigentlich.',
+    'Teurer Spaß, {name}. Der Joker wäre später Gold wert gewesen.',
+    'Joker verbrannt, {name}. Ich notier das als Geschenk an mich.',
+  ],
+  // Nur ein Feld angekreuzt.
+  humanLean: [
+    'Ein Feld, {name}? Wow. Ganze Arbeit.',
+    'Mini-Zug, {name}. Nur nicht überanstrengen.',
+    '{name} kreuzt EIN Kästchen an. Atemberaubend.',
+    'Ein Kreuzchen, {name}? Geht auch mutiger.',
+    'So gewinnt man keine Rennen, {name}. Aber niedlich.',
+  ],
+  // Spalte/Farbe abgeschlossen - zaehneknirschendes Lob.
+  humanGood: [
+    'Na sieh an, {name} kann es doch. Einmalig, schätze ich.',
+    'Nicht schlecht, {name}. Glück muss man haben.',
+    'Ordentlich, {name}. Hast du gespickt?',
+    'Okay okay, {name}, der saß. Zufall natürlich.',
+    'Respekt, {name} – das hätte ich auch gemacht. Nur früher.',
+  ],
+  // Grosser Zug (>=4 Felder), sauber.
+  humanBig: [
+    'Viele Felder, {name}. Quantität vor Qualität, was?',
+    'Schön großzügig, {name}. Hoffentlich passt das noch zusammen.',
+    'Voll reingehauen, {name}. Mutig.',
+    'Fünf auf einmal, {name}? Angeber. Das ist MEIN Job.',
+  ],
+  // Gepasst.
+  humanPass: [
+    '{name} passt. Kapituliert man heute schon so früh?',
+    'Nichts gefunden, {name}? Tja, Denken ist eben schwer.',
+    '{name} setzt aus. Sehr … entspannt.',
+    'Passen, {name}? Kreative Form des Mitspielens.',
+    'Du lässt aus, {name}? Mehr Würfel für mich, danke.',
+  ],
+  // Fader Standardzug - allgemeiner Spott ("fast jeder Zug").
+  humanGeneral: [
+    'Solide langweilig, {name}.',
+    'Okay, {name}. Ich tu mal so, als wäre das ein Plan.',
+    'Hübsch, {name}. Ändert am Ergebnis nichts.',
+    'Weiter so, {name} – ich gewinne trotzdem.',
+    'Notiert, {name}. Beeindruckt? Eher nicht.',
+    'Du spielst, ich gewinne, {name}. Eingespieltes Team.',
+    'Mhm, {name}. Mach du nur.',
+    'Ich schau dir gern beim Verlieren zu, {name}.',
+    'Brav, {name}. Setzen, drei.',
+  ],
 };
 
 // Zuletzt gesagte Sprueche merken, damit sich unter ~10 Spruechen hoechstens
@@ -523,4 +558,43 @@ export function leopoldComment(situation, leaderName) {
   const sit = LINES[situation];
   const useGeneral = !sit || Math.random() < 0.33;
   return draw([useGeneral ? LINES.general : sit], leaderName);
+}
+
+// ----------------------------------------------------------------------------
+// Leopold verspottet den MENSCHLICHEN Zug. Wird nur aufgerufen, wenn Leopold
+// ('schwer') im Spiel ist (siehe flow.js). choice = { cells, color, count,
+// jokersUsed } oder null (= gepasst).
+// ----------------------------------------------------------------------------
+
+// Ordnet einen menschlichen Zug einer Spott-Situation zu. Klassifiziert auf dem
+// Vor-Zug-Blatt (temporaer markieren, danach zuruecksetzen) - veraendert es nicht.
+function classifyHumanMove(sheet, choice) {
+  if (!choice) return 'humanPass';
+  const { cells, color, count, jokersUsed = 0 } = choice;
+  const fragBefore = fragmentBadness(sheet, color);
+  for (const [r, c] of cells) sheet.marks[r][c] = true;
+  const fragAfter = fragmentBadness(sheet, color);
+  const newCols = sheet.newlyCompletedColumns(cells);
+  const newColors = sheet.newlyCompletedColors(cells);
+  for (const [r, c] of cells) sheet.marks[r][c] = false;
+
+  const strand = fragAfter - fragBefore;        // >0: kleiner Rest neu erzeugt
+  if (strand >= 2) return 'humanStrand';        // 1er/2er-Luecke hinterlassen
+  if (jokersUsed > 0 && count <= 2) return 'humanJokerWaste';
+  if (newCols.length || newColors.length) return 'humanGood';
+  if (count >= 4) return 'humanBig';
+  if (count === 1) return 'humanLean';
+  return 'humanMeh';
+}
+
+// Liefert Leopolds Spruch zum menschlichen Zug (oder '' = schweigt). Auffaellige
+// Situationen werden immer kommentiert; beim faden Standardzug (humanMeh) kommt
+// zu ~75 % ein allgemeiner Spott, sonst bleibt Leopold mal still.
+export function leopoldReactToHuman(sheet, choice, humanName) {
+  const sit = classifyHumanMove(sheet, choice);
+  if (sit === 'humanMeh') {
+    if (Math.random() >= 0.75) return '';
+    return draw([LINES.humanGeneral], humanName);
+  }
+  return draw([LINES[sit]], humanName);
 }

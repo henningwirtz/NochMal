@@ -15,7 +15,7 @@ import { humanTurn } from './controls.js';
 import { recordResults } from './storage.js';
 import { escapeHtml } from './util.js';
 import { playRoll, playMark, playEnd } from './sound.js';
-import { chooseMove, leopoldThinking, leopoldComment } from '../core/ai.js';
+import { chooseMove, leopoldThinking, leopoldComment, leopoldReactToHuman } from '../core/ai.js';
 import {
   COLOR_LABEL,
   COLOR_HEX,
@@ -202,7 +202,26 @@ export function runGame(game, dom) {
     });
   }
 
-  function applyHumanResult(idx, player, res) {
+  async function applyHumanResult(idx, player, res) {
+    // Leopold (KI 'schwer') verspottet den menschlichen Zug. Spruch VOR dem
+    // Anwenden bestimmen, solange das Blatt noch im Vor-Zug-Zustand ist. Nur im
+    // KI-Modus (nicht PvP/Notizblock) und nur wenn Leopold mitspielt.
+    const leopoldInGame = game.aiDifficulty === 'schwer'
+      && !game.relaxed && game.players.some((p) => !p.isHuman);
+    let leoTaunt = '';
+    if (leopoldInGame) {
+      if (res.action === 'pass') {
+        leoTaunt = leopoldReactToHuman(player.sheet, null, player.name);
+      } else {
+        const pool = game.availablePool(idx);
+        const cDie = pool.colorDice.find((d) => d.id === res.choice.colorId);
+        const nDie = pool.numberDice.find((d) => d.id === res.choice.numberId);
+        const jokersUsed = (cDie && cDie.face === JOKER ? 1 : 0)
+          + (nDie && nDie.face === JOKER ? 1 : 0);
+        leoTaunt = leopoldReactToHuman(player.sheet, { ...res.choice, jokersUsed }, player.name);
+      }
+    }
+
     if (res.action === 'pass') {
       game.submitPass(idx);
       announce(dom, res.timedOut ? `${player.name}: Zeit abgelaufen – gepasst.` : `${player.name} passt.`);
@@ -216,6 +235,16 @@ export function runGame(game, dom) {
       announce(dom, `${player.name}: ${describeMove(res.choice)}`);
     }
     history.push(pendingSnapshot);
+
+    // Leopolds Spruch kurz lesbar stehen lassen, bevor es weitergeht.
+    if (leoTaunt && dom.commentary) {
+      dom.commentary.textContent = leoTaunt;
+      busy = true;
+      updateUndoButton();
+      await delay(1300 * (game.aiSpeed || 1));
+      busy = false;
+      updateUndoButton();
+    }
     advance();
   }
 
