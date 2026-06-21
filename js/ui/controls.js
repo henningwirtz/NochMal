@@ -74,11 +74,11 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       });
     }
 
-    // Systemhinweis setzen: erscheint im #message-Bereich (Hochformat) und in der
-    // Kommentar-Box (Querformat), damit der Hinweis in beiden Layouts sichtbar ist.
+    // Systemhinweis setzen: erscheint nur noch im #message-Bereich (Hochformat).
+    // Die Kommentar-Box (#commentary) ist absichtlich SPASS-ONLY und zeigt nur
+    // Leopolds Sprüche - keine spieltechnischen Hinweise mehr.
     function setHint(text) {
       dom.message.textContent = text;
-      if (dom.commentary) dom.commentary.textContent = text;
     }
 
     function finish(result) {

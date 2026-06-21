@@ -91,7 +91,12 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   `leopoldThinking`/`leopoldComment` ziehen daraus einen Spruch aus `LINES` (spricht den
   Führenden mit Namen an); ~⅓ der Zeit kommt ein allgemeiner Spruch, und eine
   `recentLines`-Sperre verhindert Wiederholungen (unter ~10 Sprüchen höchstens einer
-  doppelt) – `flow.js` zeigt ihn im Kommentarfeld (`#commentary`)).
+  doppelt) – `flow.js` zeigt ihn im Kommentarfeld (`#commentary`). **Sprech-Rhythmus
+  ans Tempo gekoppelt** (`aiChoose` in `flow.js`): bei den langsamen Stufen *Sehr
+  langsam*/*Langsam* (`aiSpeed >= 1.5`, `chatty`) erzählt Leopold in ZWEI gut lesbaren
+  Schritten – erst ein Denk-/Scan-Spruch (`leopoldThinking`) mit Lesepause, dann der
+  Entscheidungs-Spruch (`leopoldComment`) und ERST danach das Ankreuzen; ab Normal-Tempo
+  bleibt es bei EINEM (dem Entscheidungs-)Spruch ohne Extra-Pause).
 - `js/ui/` – Rendering & Ablauf: `boardView.js` (`renderSheet` = ein Blatt),
   `flow.js` (`runGame` = **event-gesteuerter Ablauf**: Mensch-Schritte (Würfeln, Zug)
   werden per Klick ausgelöst; `present()` ist die zentrale Weiche, die aus dem
@@ -295,6 +300,16 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 - Optionaler Zug-Timer: `game.moveTimer` (Sekunden, 0 = aus); läuft je Mensch-Zug in
   `controls.js`, bei Ablauf wird automatisch gepasst (`{ action:'pass', timedOut:true }`).
 - KI-Tempo: `game.aiSpeed` (Faktor auf die Pausen in `runAi`; >1 langsamer, <1 schneller).
+  Auswahl im Setup (`#ai-speed`): **Sehr langsam** (3) · Langsam (1,7) · Normal (1) ·
+  Schnell (0,55) · Sehr schnell (0,28). Ab `aiSpeed >= 1.5` redet Leopold zweistufig
+  (s. ai.js-Eintrag, `chatty`).
+- **Kommentarbox (`#commentary`) ist Spaß-only:** sie zeigt NUR Leopolds Sprüche.
+  Spieltechnische Hinweise stehen dort nicht mehr – `setHint` (`controls.js`) schreibt nur
+  noch in `#message`, `announce`/`present`/`presentRoll`/`presentAiPhase` (`flow.js`)
+  schreiben nicht mehr hinein bzw. leeren sie. Bei anderen KIs/PvP/Mensch-Zug bleibt sie
+  leer (`present()` leert sie zu Beginn jedes Schritts; innerhalb einer KI-Phase läuft
+  `runAiPhase` ohne `present()`, Leopolds Text bleibt also stehen). Statuszeile
+  (`#status-bar`) und Log (`#log`) bleiben als sachliche Info erhalten.
 - Hell/Dunkel: `body.light` überschreibt die CSS-Variablen; Theme + Mute liegen in
   `prefs` (localStorage) und werden sofort beim Umschalten gespeichert.
 - Setup merkt sich Spielernamen, Anzahl, KI-Stärke, KI-Tempo, KI-Auto-Häkchen und

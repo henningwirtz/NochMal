@@ -84,6 +84,11 @@ export function runGame(game, dom) {
   // ab, bis wieder ein Mensch an der Reihe ist.
   function present() {
     currentControl = null;
+    // Die Kommentar-Box ist SPASS-ONLY (nur Leopolds Sprüche). Bei jedem neuen
+    // Schritt erst leeren - Leopold füllt sie in aiChoose wieder; bei Mensch/PvP/
+    // anderen KIs bleibt sie leer. (Innerhalb einer KI-Phase läuft runAiPhase ohne
+    // present(), Leopolds Text bleibt also stehen.)
+    if (dom.commentary) dom.commentary.textContent = '';
     // Spielende: regulär (2 Farben / alle Spalten) oder im Solo nach 30 Würfen.
     if (game.finished ||
         (game.soloMode && game.rollCount >= SOLO_MAX_ROLLS && game.isRoundComplete())) {
@@ -115,7 +120,6 @@ export function runGame(game, dom) {
     renderScoreboard(dom, game);
     dom.actionBar.replaceChildren();
     dom.diceTray.replaceChildren();
-    if (dom.commentary) dom.commentary.textContent = `${active.name} ist aktiv – zum Würfeln tippen.`;
 
     const btn = dom.rollBtn;
     if (!btn) return;
@@ -237,7 +241,6 @@ export function runGame(game, dom) {
     if (game.aiAuto && !pauseAuto) { runAiPhase(); return; }
 
     dom.actionBar.replaceChildren();
-    if (dom.commentary) dom.commentary.textContent = `${player.name} (KI) ist dran – zum Starten tippen.`;
     const btn = document.createElement('button');
     btn.className = 'primary';
     btn.textContent = '▶ KI laufen lassen';
@@ -300,22 +303,32 @@ export function runGame(game, dom) {
   async function aiChoose(idx, player) {
     const spd = game.aiSpeed || 1;
     const leopold = game.aiDifficulty === 'schwer';
+    // Sprech-Rhythmus an das Tempo angepasst: bei den langsamen Stufen (Sehr
+    // langsam/Langsam, spd >= 1.5) erzählt Leopold in ZWEI gut lesbaren Schritten -
+    // erst ein Denk-/Scan-Spruch ("gucken wir erst mal, was Henning hat …"), kurze
+    // Lesepause, dann der Entscheidungs-Spruch und ERST danach das Ankreuzen. Ab
+    // Normal-Tempo bleibt es bei EINEM (dem Entscheidungs-)Spruch. Die Kommentar-Box
+    // ist Spass-only - bei anderen KIs/PvP/Mensch bleibt sie leer (siehe present()).
+    const chatty = leopold && spd >= 1.5;
     const ctx = buildAiContext(game, idx);
     pendingSnapshot = game.snapshot();
     renderBoards(dom, game, { chooserIdx: idx });
     renderDiceStatic(dom, game, idx);
     setStatus(dom, `${player.name} (KI) überlegt …`);
-    if (dom.commentary) {
-      dom.commentary.textContent = leopold
-        ? leopoldThinking(ctx)
-        : `${player.name} (KI) überlegt …`;
+
+    // Schritt 1 (nur im Plauder-Tempo): eigener Denk-Spruch + Lesepause.
+    if (chatty && dom.commentary) {
+      dom.commentary.textContent = leopoldThinking(ctx);
+      await delay(1500 * spd);
+    } else {
+      await delay(700 * spd);
     }
-    await delay(700 * spd);
 
     const move = chooseMove(player.sheet, game.availablePool(idx), game.aiDifficulty, ctx);
     if (!move) {
-      game.submitPass(idx);
       if (leopold && dom.commentary) dom.commentary.textContent = leopoldComment('pass', ctx.leaderName);
+      if (chatty) await delay(1200 * spd);
+      game.submitPass(idx);
       announce(dom, `${player.name} (KI) passt.`);
       await delay(500 * spd);
       history.push(pendingSnapshot);
@@ -323,8 +336,11 @@ export function runGame(game, dom) {
       return;
     }
 
+    // Schritt 2: Entscheidungs-Spruch. Im Plauder-Tempo gut lesbar stehen lassen,
+    // BEVOR angekreuzt wird; sonst läuft er parallel zum Ankreuzen mit.
     if (leopold && dom.commentary) {
       dom.commentary.textContent = leopoldComment(move.situation, ctx.leaderName);
+      if (chatty) await delay(1400 * spd);
     }
 
     setStatus(dom, `${player.name} (KI) kreuzt an: ${describeMove(move)}`);
@@ -559,8 +575,8 @@ function announce(dom, text) {
   line.className = 'log-line';
   line.textContent = text;
   dom.log.prepend(line);
-  // Letzte Ansage zusaetzlich in die Kommentar-Box (im Querformat sichtbar).
-  if (dom.commentary) dom.commentary.textContent = text;
+  // Bewusst NICHT in die Kommentar-Box: die ist Spass-only (nur Leopolds Sprueche).
+  // Sachliche Ansagen stehen weiterhin im Log (#log) und ggf. in der Statuszeile.
 }
 
 // Abschnitts-Trenner je Wurf - macht den Spielverlauf im Log nachvollziehbar.
