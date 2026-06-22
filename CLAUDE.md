@@ -12,9 +12,17 @@ am Handy via GitHub Pages, siehe README („Auf dem Handy spielen").
 
 ## Zusatzregeln (Hausregeln)
 
-Im Startbildschirm (zwischen Modus-Auswahl und „Spiel starten") klappt der Knopf
-**„Zusätzliche Regeln"** (`<details class="extra-rules">` in `index.html`) zwei einzeln
-wählbare Ankreuzfelder auf – frei kombinierbar, **gelten in beiden Modi** (KI + PvP):
+Im Startbildschirm (zwischen Modus-Auswahl und „Spiel starten") öffnet der Knopf
+**„Zusätzliche Regeln"** (`#extra-rules-btn` in `index.html`) ein zentriertes
+**Overlay-Menü** (`#rules-modal`, Optik wie `#end-choice` – `position: fixed`, mittig,
+abgedunkelter Hintergrund) mit zwei einzeln wählbaren Ankreuzfeldern (je Titel +
+Kurzbeschreibung). Schließen über „Fertig" (`#rules-done-btn`) oder Klick auf den
+dunklen Hintergrund (alles in `main.js` verdrahtet). Das frühere `<details>` (inline
+aufklappend) wurde ersetzt, weil es im Querformat unter `overflow: hidden` abgeschnitten
+wurde; das Overlay hat immer genug Platz (`max-height: 88dvh`, scrollt notfalls intern).
+Die Checkbox-IDs (`#rule-joker-six`, `#rule-pass-penalty`) sind unverändert, daher
+greifen `saveSettings/loadSettings` weiter. Beide Regeln sind frei kombinierbar und
+**gelten in beiden Modi** (KI + PvP):
 
 - **Zahlenjoker auch als 6** (`game.jokerSix`, Checkbox `#rule-joker-six`): der
   Zahlenjoker („?") darf statt 1–5 auch **6 zusammenhängende Felder einer Farbe** in

@@ -119,23 +119,42 @@ button.big { font-size: 1.1rem; padding: 12px 24px; margin-top: 10px; }
 .rules summary { cursor: pointer; color: var(--ink); }
 .rules ul { line-height: 1.5; }
 
-/* Zusätzliche Regeln (Hausregeln) - Knopf-Optik fürs Summary, klappt die
-   Ankreuzfelder auf. Sitzt zwischen Modus-Auswahl und "Spiel starten". */
-.extra-rules { width: 100%; max-width: 480px; margin: 0 0 12px; }
-.extra-rules > summary {
+/* Zusätzliche Regeln (Hausregeln) - Knopf, der ein Overlay-Menü mit viel
+   Platz öffnet. Sitzt zwischen Modus-Auswahl und "Spiel starten". */
+.extra-rules-btn {
+  width: 100%; max-width: 480px; margin: 0 0 12px;
   cursor: pointer;
-  list-style: none;
+  text-align: left;
   background: var(--panel-2);
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 14px;
   font-weight: 600;
+  font-size: 1rem;
 }
-.extra-rules > summary::-webkit-details-marker { display: none; }
-.extra-rules > summary::after { content: " ▾"; color: var(--muted); }
-.extra-rules[open] > summary::after { content: " ▴"; }
-.extra-rules .check { margin: 10px 4px 0; align-items: flex-start; }
+.extra-rules-btn::after { content: " ▾"; color: var(--muted); }
+.extra-rules-btn:hover { filter: brightness(1.08); }
+
+/* Overlay-Menü der Zusätzlichen Regeln (zentriert, viel Platz). */
+.rules-modal {
+  position: fixed; inset: 0; z-index: 9998;
+  display: flex; align-items: center; justify-content: center;
+  background: #000000aa; padding: 20px;
+}
+.rules-modal.hidden { display: none; }
+.rules-modal-box {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 22px; display: flex; flex-direction: column; gap: 16px;
+  width: min(420px, 92vw); max-height: 88dvh; overflow-y: auto;
+  box-shadow: 0 10px 40px #000a;
+}
+.rules-modal-box h3 { margin: 0; font-size: 1.2rem; text-align: center; }
+.rules-modal-box .check { align-items: flex-start; gap: 10px; }
+.rules-modal-box .check span { display: flex; flex-direction: column; gap: 3px; }
+.rules-modal-box .check strong { font-weight: 700; }
+.rules-modal-box .check small { color: var(--muted); line-height: 1.35; }
+.rules-modal-box .primary { margin-top: 4px; padding: 11px 16px; font-size: 1rem; }
 
 /* ---------- Game header ---------- */
 .game-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -828,7 +847,7 @@ body.mode-notepad .totals { margin-top: 0; }
       "start  settings rules";
     align-items: start;
   }
-  .extra-rules { grid-area: xrules; max-width: none; margin: 0; }
+  .extra-rules-btn { grid-area: xrules; max-width: none; margin: 0; }
   .setup-head { grid-area: head; margin: 0; }
   .logo { font-size: 2rem; }
 

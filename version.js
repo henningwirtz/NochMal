@@ -8,4 +8,4 @@
 // So muss die Version nur HIER hochgezaehlt werden; der Offline-Cache
 // invalidiert automatisch mit, weil sein Name aus dieser Zeichenkette entsteht.
 // Kurzer, sprechender Name (z. B. '2.2 · Aufraeumen').
-self.APP_VERSION = '3.6 · Zusatzregeln: Joker als 6 & Pass-Minuspunkt';
+self.APP_VERSION = '3.7 · Zusatzregeln als Overlay-Menue';

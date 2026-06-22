@@ -269,6 +269,18 @@ $('end-discard-btn').addEventListener('click', () => {
   backToSetup();
 });
 
+// Zusätzliche Regeln: Overlay-Menü öffnen/schließen.
+$('extra-rules-btn').addEventListener('click', () => {
+  $('rules-modal').classList.remove('hidden');
+});
+$('rules-done-btn').addEventListener('click', () => {
+  $('rules-modal').classList.add('hidden');
+});
+// Klick auf den dunklen Hintergrund schließt das Menü ebenfalls.
+$('rules-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'rules-modal') $('rules-modal').classList.add('hidden');
+});
+
 startBtn.addEventListener('click', () => {
   const notepad = currentMode === 'b';
   const aiDifficulty = $('ai-difficulty').value;
