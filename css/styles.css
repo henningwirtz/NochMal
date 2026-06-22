@@ -838,12 +838,15 @@ body.mode-notepad .totals { margin-top: 0; }
     max-width: none; height: 100dvh; overflow: hidden;
     display: grid; gap: 8px 14px;
     grid-template-columns: 0.85fr 1.3fr 1fr;   /* Modus | Einstellungen | Liste */
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    /* Letzte Zeile (leer, 1fr) schluckt die Resthoehe -> Mitte & rechts enden auf
+       Hoehe des "Spiel starten"-Knopfs statt bis zum Bildschirmrand zu reichen. */
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
     grid-template-areas:
       "head   head     head"
       "mode   settings side"
       "xrules settings side"
-      "start  settings side";
+      "start  settings side"
+      "blank  blank    blank";
     align-items: start;
   }
   .extra-rules-btn { grid-area: xrules; max-width: none; margin: 0; }
@@ -866,7 +869,7 @@ body.mode-notepad .totals { margin-top: 0; }
      gestreckt) und scrollt erst, wenn der Inhalt die Spaltenhöhe übersteigt. */
   #setup-screen > .setup-card:not(#leaderboard-card) {
     grid-area: settings; max-width: none; margin: 0;
-    align-self: start; max-height: 100%; overflow-y: auto;
+    align-self: stretch; min-height: 0; max-height: 100%; overflow-y: auto;
     padding-top: 10px; padding-bottom: 10px;
   }
   /* Felder enger setzen -> die Einstellungsspalte wird kürzer und passt komplett
@@ -881,6 +884,6 @@ body.mode-notepad .totals { margin-top: 0; }
   /* Bestenliste oben, Kurzregeln darunter - beide in der rechten Spalte. */
   #leaderboard-card {
     grid-area: side; max-width: none; margin: 0;
-    align-self: stretch; overflow-y: auto;
+    align-self: stretch; min-height: 0; overflow-y: auto;
   }
 }
