@@ -10,6 +10,12 @@ import { GRID_ROWS, GRID_COLS, START_COL, MAX_PER_TURN } from './constants.js';
 import { GRID } from '../data/board.js';
 
 const key = (r, c) => `${r},${c}`;
+// Ganzzahliger Feld-Schluessel fuer die (heisse) Platzierungs-Aufzaehlung: spart die
+// vielen kurzlebigen Strings aus `key`. Nur fuer IN-Bounds-Felder eindeutig, daher
+// vor jedem Nachbar-Lookup eine Bereichspruefung (sonst koennte z.B. Spalte -1 auf ein
+// gueltiges Feld der Vorzeile abbilden). Validierung (isConnected/isValid...) nutzt
+// weiter die kollisionssicheren String-Schluessel.
+const idx = (r, c) => r * GRID_COLS + c;
 const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
 function inBounds(r, c) {
@@ -66,7 +72,7 @@ export function legalPlacements(sheet, color, count) {
     for (let c = 0; c < GRID_COLS; c++) {
       if (!sheet.isMarked(r, c) && GRID[r][c] === color) {
         candidates.push([r, c]);
-        candSet.add(key(r, c));
+        candSet.add(idx(r, c));
       }
     }
   }
@@ -78,7 +84,7 @@ export function legalPlacements(sheet, color, count) {
     for (const [dr, dc] of DIRS) {
       const nr = r + dr;
       const nc = c + dc;
-      if (candSet.has(key(nr, nc))) out.push([nr, nc]);
+      if (inBounds(nr, nc) && candSet.has(idx(nr, nc))) out.push([nr, nc]);
     }
     return out;
   }
@@ -86,7 +92,7 @@ export function legalPlacements(sheet, color, count) {
   // Erweitert eine zusammenhaengende Teilmenge bis zur Groesse `count`.
   function expand(subset, subsetKeys) {
     if (subset.length === count) {
-      const canon = subset.map(([r, c]) => key(r, c)).sort().join('|');
+      const canon = subset.map(([r, c]) => idx(r, c)).sort((a, b) => a - b).join('|');
       if (!found.has(canon)) found.set(canon, subset.map((cell) => cell.slice()));
       return;
     }
@@ -94,7 +100,7 @@ export function legalPlacements(sheet, color, count) {
     const seen = new Set();
     for (const [r, c] of subset) {
       for (const [nr, nc] of candNeighbors(r, c)) {
-        const k = key(nr, nc);
+        const k = idx(nr, nc);
         if (!subsetKeys.has(k) && !seen.has(k)) {
           seen.add(k);
           frontier.push([nr, nc]);
@@ -102,7 +108,7 @@ export function legalPlacements(sheet, color, count) {
       }
     }
     for (const [nr, nc] of frontier) {
-      const k = key(nr, nc);
+      const k = idx(nr, nc);
       subset.push([nr, nc]);
       subsetKeys.add(k);
       expand(subset, subsetKeys);
@@ -112,7 +118,7 @@ export function legalPlacements(sheet, color, count) {
   }
 
   for (const [r, c] of candidates) {
-    expand([[r, c]], new Set([key(r, c)]));
+    expand([[r, c]], new Set([idx(r, c)]));
   }
 
   const result = [];

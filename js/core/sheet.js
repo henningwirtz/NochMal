@@ -172,17 +172,19 @@ export class Sheet {
   computeScore() {
     const bonus = Object.values(this.colorAward).reduce((a, b) => a + b, 0);
     const columns = this.columnAward.reduce((a, v) => a + (v || 0), 0);
-    const jokerBonus = this.jokersRemaining() * UNUSED_JOKER_BONUS;
-    const starPenalty = this.uncrossedStars() * STAR_PENALTY;
+    const jokersRemaining = this.jokersRemaining();
+    const jokerBonus = jokersRemaining * UNUSED_JOKER_BONUS;
+    const uncrossedStars = this.uncrossedStars();
+    const starPenalty = uncrossedStars * STAR_PENALTY;
     const passPenalty = this.passes * this.passPenalty;
     const total = bonus + columns + jokerBonus - starPenalty - passPenalty;
     return {
       bonus,
       columns,
       jokerBonus,
-      jokersRemaining: this.jokersRemaining(),
+      jokersRemaining,
       starPenalty,
-      uncrossedStars: this.uncrossedStars(),
+      uncrossedStars,
       passPenalty,
       passes: this.passes,
       total,

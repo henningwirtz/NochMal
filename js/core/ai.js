@@ -67,24 +67,33 @@ const CFG = {
 // dem Zug aufgerufen; die Differenz misst, wie viel kleinen Rest der Zug NEU
 // erzeugt (positiv = schlecht) bzw. sauber wegfuellt (negativ = gut).
 const FRAGMENT_WEIGHT = [0, 4.0, 2.2, 1.0, 0.4, 0.15]; // Index = Fragmentgroesse
+// Wiederverwendeter "besucht"-Puffer fuer den Flood-Fill: statt je Aufruf ein neues
+// 2D-Array anzulegen (fragmentBadness laeuft zweimal je bewerteter Platzierung, also
+// sehr oft), markieren wir Felder mit einer pro Aufruf erhoehten Generationsnummer.
+// Ein Eintrag gilt als "besucht", wenn er der aktuellen Generation entspricht - so
+// entfaellt das Zuruecksetzen. Uint32 laeuft praktisch nie ueber (4 Mrd. Aufrufe).
+const _seenBuf = new Uint32Array(TOTAL_CELLS);
+let _seenGen = 0;
 function fragmentBadness(sheet, color) {
-  const seen = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(false));
+  const gen = ++_seenGen;
   let bad = 0;
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
-      if (seen[r][c] || sheet.marks[r][c] || GRID[r][c] !== color) continue;
+      const i = r * GRID_COLS + c;
+      if (_seenBuf[i] === gen || sheet.marks[r][c] || GRID[r][c] !== color) continue;
       let size = 0;
       const stack = [[r, c]];
-      seen[r][c] = true;
+      _seenBuf[i] = gen;
       while (stack.length) {
         const [cr, cc] = stack.pop();
         size++;
         for (const [dr, dc] of DIRS) {
           const nr = cr + dr;
           const nc = cc + dc;
-          if (nr >= 0 && nr < GRID_ROWS && nc >= 0 && nc < GRID_COLS
-              && !seen[nr][nc] && !sheet.marks[nr][nc] && GRID[nr][nc] === color) {
-            seen[nr][nc] = true;
+          if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+          const ni = nr * GRID_COLS + nc;
+          if (_seenBuf[ni] !== gen && !sheet.marks[nr][nc] && GRID[nr][nc] === color) {
+            _seenBuf[ni] = gen;
             stack.push([nr, nc]);
           }
         }

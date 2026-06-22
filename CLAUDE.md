@@ -90,7 +90,12 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 - `js/core/` – reine Logik, DOM-frei: `constants.js` (Farben, Würfel, Wertungstabellen),
   `dice.js`, `rules.js` (legale Platzierungen; `isRelaxedPlacement` für den Notizblock-
   Modus: unabhängig von den Würfeln, aber regelkonform – zusammenhängend, verankert,
-  **nur eine Farbe pro Zug**, max. 5 Felder), `sheet.js` (ein Spielblatt + Wertung),
+  **nur eine Farbe pro Zug**, max. 5 Felder. **Perf:** die heiße Aufzählung in
+  `legalPlacements`/`expand` nutzt ganzzahlige Feld-Schlüssel `idx = r*GRID_COLS+c`
+  statt `"r,c"`-Strings – Nachbar-Lookups sind dort bereichsgeprüft, da `idx` nur
+  in-bounds eindeutig ist; die Validierung `isConnected`/`isValidPlacement` bleibt bei
+  den kollisionssicheren String-Schlüsseln. Brute-Force-verglichen: identische Treffer),
+  `sheet.js` (ein Spielblatt + Wertung),
   `game.js` (Rundenautomat; Optionen `aiDifficulty`, `relaxed`, `aiAuto`; `submitMarks`
   kreuzt im Notizblock-Modus frei gewählte, regelkonform erreichbare Felder ohne
   Würfel-Prüfung an),
@@ -117,7 +122,12 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   strandet Leopold praktisch keine Felder mehr – außer der Zug schließt eine Spalte (dann
   überwiegt der große `complete`/Spaltenwert-Bonus den Strand-Abzug; genau die gewünschte
   Endspiel-Ausnahme, ohne Sonderfall). Der `frontier`-Mobilitätsbonus ist für Leopold aus
-  (er belohnte Lücken).
+  (er belohnte Lücken). **Perf:** `fragmentBadness` läuft zweimal je bewerteter Platzierung
+  (vorher/nachher) und ist damit der heißeste Term; statt je Aufruf ein 2D-`seen`-Array
+  anzulegen, markiert der Flood-Fill jetzt einen wiederverwendeten flachen `Uint32Array`-
+  Puffer mit einer pro Aufruf erhöhten Generationsnummer (kein Zurücksetzen nötig). Zusammen
+  mit den Ganzzahl-Schlüsseln in `rules.js` ist ein Leopold-Zug dadurch ~35 % schneller
+  (~1,28 → ~0,83 ms; Spielstärke unverändert, alle Tests + Sim grün).
   **Außenspalten** (Fortschritt × Spaltenwert, quadratisch → wertvolle Ränder A/O zuerst,
   früh verstärkt). **Defensive** (`denialBonus`, nur am eigenen/aktiven Zug: verbraucht
   bevorzugt den **einzigen** Würfel einer Farbe, die der stärkste Gegner braucht – die
