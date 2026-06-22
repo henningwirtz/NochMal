@@ -836,22 +836,23 @@ body.mode-notepad .totals { margin-top: 0; }
 @media (orientation: landscape) and (pointer: coarse) {
   #setup-screen:not(.hidden) {
     max-width: none; height: 100dvh; overflow: hidden;
-    display: grid; gap: 8px 14px;
+    display: grid; gap: 6px 14px;
     grid-template-columns: 0.85fr 1.3fr 1fr;   /* Modus | Einstellungen | Liste */
-    /* Letzte Zeile (leer, 1fr) schluckt die Resthoehe -> Mitte & rechts enden auf
-       Hoehe des "Spiel starten"-Knopfs statt bis zum Bildschirmrand zu reichen. */
-    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
     grid-template-areas:
       "head   head     head"
       "mode   settings side"
       "xrules settings side"
-      "start  settings side"
-      "blank  blank    blank";
-    align-items: start;
+      "start  settings side";
+    /* align-content: start packt die Zeilen oben zusammen (Inhalt rueckt nach oben,
+       statt mittig zu schweben) und verhindert, dass die auto-Zeilen auf volle
+       Bildschirmhoehe aufgeblasen werden -> der gedehnte Start-Knopf bleibt normal
+       hoch, und Mitte/rechts enden exakt auf seiner Unterkante. */
+    align-items: start; align-content: start;
   }
   .extra-rules-btn { grid-area: xrules; max-width: none; margin: 0; }
   .setup-head { grid-area: head; margin: 0; }
-  .logo { font-size: 2rem; }
+  .logo { font-size: 1.8rem; }
 
   #mode-select {
     grid-area: mode; max-width: none; margin: 0;
@@ -859,9 +860,11 @@ body.mode-notepad .totals { margin-top: 0; }
   }
   .mode-card { flex: 0 0 auto; }
 
-  /* Start-Knopf direkt unter den Modus-Karten in der linken Spalte. */
+  /* Start-Knopf direkt unter den Modus-Karten in der linken Spalte. Er DEHNT sich
+     ueber seine Zeile (die so hoch wird wie noetig, damit die Einstellungsspalte
+     daneben Platz hat) -> seine Unterkante liegt exakt auf Hoehe von Mitte/rechts. */
   #setup-screen #start-btn {
-    grid-area: start; align-self: start; max-width: none; margin: 0;
+    grid-area: start; align-self: stretch; max-width: none; margin: 0;
   }
 
   /* Einstellungskarte (alles außer Bestenliste) in die mittlere Spalte. Sie wird
