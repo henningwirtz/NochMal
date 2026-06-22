@@ -213,8 +213,10 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   `#setup-screen`): drei Spalten unterschiedlicher Breite – links Modus-Auswahl **mit dem
   „Spiel starten"-Knopf direkt darunter** (`#start-btn` als direktes Kind von
   `#setup-screen`, grid-area `start` in der linken Spalte unter `mode`), Mitte
-  (am breitesten) Einstellungen, rechts Bestenliste oben + Kurzregeln
-  darunter; passt ohne Scrollen (`height: 100dvh; overflow: hidden`, nur Liste scrollt).
+  (am breitesten) Einstellungen, rechts die Bestenliste; passt ohne Scrollen
+  (`height: 100dvh; overflow: hidden`, nur Liste scrollt). Der frühere „Kurzregeln"-
+  Aufklapper (`details.rules`) wurde entfernt; die Einstellungsspalte ist enger gesetzt
+  (`.field { margin-bottom: 6px }`), damit sie komplett ohne internen Scroll passt.
   Im Standard-/Hochformat steht „Spiel starten" ebenfalls direkt unter den Modus-Karten
   (vor der Einstellungskarte), damit er **jederzeit erreichbar** ist.
   Kopfzeile (`.setup-head`) = Logo + kurzer Versionsname (`#build-badge`, gespeist aus

@@ -436,7 +436,7 @@ const LINES = {
     'Funkel, funkel – Punkt gerettet.',
   ],
   big: [
-    'Fünf auf einen Streich!',
+    'Alles auf einen Streich!',
     'Das nenn ich Ausbeute.',
     'Großzügig mit mir selbst.',
     'Schön viel auf einmal – effizient.',
@@ -514,7 +514,7 @@ const LINES = {
     'Viele Felder, {name}. Quantität vor Qualität, was?',
     'Schön großzügig, {name}. Hoffentlich passt das noch zusammen.',
     'Voll reingehauen, {name}. Mutig.',
-    'Fünf auf einmal, {name}? Angeber. Das ist MEIN Job.',
+    'So viele auf einmal, {name}? Angeber. Das ist MEIN Job.',
   ],
   // Gepasst.
   humanPass: [
