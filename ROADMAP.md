@@ -73,12 +73,12 @@ unten/„Erledigt" verschieben.
   −2 bzw. −3); aktuell global `STAR_PENALTY = 2` für alle Blöcke. Umsetzung: Strafe in den
   `BOARDS`-Eintrag aufnehmen und in `computeScore`/`sheet.js` statt der Konstante nutzen.
   → `board.js`, `constants.js`, `sheet.js`.
-- **Joker als 6** – ein Zahl-Joker-Element darf als Wert 6 eingesetzt werden.
-  → `constants.js`/`rules.js`, ggf. `sheet.js`.
-- **Minuspunkte / Pass-Felder** – begrenzte Anzahl Pässe (z.B. 5); jedes Passen
-  verbraucht ein Feld (−1/−2), am Ende verrechnet (im Kern Original-Passregel).
-  → `sheet.js` (Pass-Zähler + Wertung), `rules.js`/`game.js` (Pass-Aktion),
-  `boardView.js` (Pass-Felder anzeigen).
+- [x] **Joker als 6** – Zahlenjoker darf 6 zusammenhängende Felder ankreuzen.
+  Als Hausregel „Zahlenjoker auch als 6" (`#rule-joker-six`) umgesetzt.
+- [x] **Minuspunkte / Pass-Felder** – jedes Passen kostet 1 Punkt.
+  Als Hausregel „Minuspunkt pro Pass" (`#rule-pass-penalty`) umgesetzt.
+- [x] **Strengere Sternstrafe** – nicht angekreuzte Sterne kosten −3 statt −2.
+  Als Hausregel „Strengere Sternstrafe (−3)" (`#rule-star-penalty`) umgesetzt.
 
 ## UI / Darstellung
 - [x] **Quer-Modus optimieren** – Landscape-Layout, Block ohne Horizontal-Scroll.
@@ -131,14 +131,12 @@ unten/„Erledigt" verschieben.
   neu zu tippen, runden­übergreifend wiederverwendet. Avatar erscheint in Setup, Spiel
   und Bestenliste. → `storage.js` (Spieler-Stammliste persistieren), `main.js` (Setup:
   Auswahl/Anlegen/Zuweisen), `boardView.js`/`flow.js` (Anzeige).
-- **Schnellauswahl per Wischen/Mehrfachklick** – wenn ein Wert gewählt ist (z.B. gelbe 5)
-  und in ein Feld der passenden Farbgruppe geklickt wird, lassen sich mehrere zusammen-
-  hängende Felder in einem Rutsch markieren: entweder durch Drüberwischen mit Maus/Finger
-  (Drag bzw. `touchmove` über die gültigen Felder) oder durch direktes Auswählen der ganzen
-  Gruppe. Nur die regelkonform erreichbaren Felder werden mitgenommen; ungültige Ziele
-  werden übersprungen. → `controls.js` (Eingabe: `pointerdown`/`pointermove`/`pointerup`
-  bzw. `touchmove`, Auswahl-Sammeln), `rules.js` (gültige Felder der aktuellen Auswahl),
-  `boardView.js` (Hover-/Wisch-Hervorhebung der erfassten Felder).
+- [x] **Wischen/Drag zum Auswählen** – Finger/Maus über Felder ziehen; alle gültigen
+  Felder auf dem Weg werden automatisch zur Auswahl hinzugefügt, ungültige übersprungen.
+  Umgesetzt über `pointerdown`/`pointermove`/`pointerup` mit `elementFromPoint`; kein
+  separater Picker, Validierung über das bestehende `highlight`-Set bzw.
+  `isRelaxedPlacement`. → `boardView.js` (`data-r`/`data-c`, `onCellPointerDown`),
+  `controls.js` (Drag-Zustand, `onCellEnterDrag`), `flow.js` (`renderBoards`-Durchleitung).
 
 ## Ton / Sprache
 - **Niederländische Ansage** – optionale Sprachausgabe (Web Speech API, `nl-NL`), sagt

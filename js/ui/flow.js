@@ -476,10 +476,11 @@ function setTurnInfo(dom, player, relaxed = false) {
 }
 
 // Rendert ALLE Spieler-Bloecke gleichzeitig, jeden in einer eigenen Karte.
-// opts: { chooserIdx, focusIdx, interactive, highlight:Set, selected:Set, onCellClick }
-//   chooserIdx  - Block des gerade Waehlenden hervorheben ("am Zug")
-//   focusIdx    - Block, der highlight/selected/onCellClick erhaelt
-//   interactive - ist der focus-Block anklickbar (nur Mensch am Zug)
+// opts: { chooserIdx, focusIdx, interactive, highlight:Set, selected:Set, onCellClick, onCellPointerDown }
+//   chooserIdx       - Block des gerade Waehlenden hervorheben ("am Zug")
+//   focusIdx         - Block, der highlight/selected/onCellClick erhaelt
+//   interactive      - ist der focus-Block anklickbar (nur Mensch am Zug)
+//   onCellPointerDown - fuer Drag/Wisch-Auswahl (controls.js)
 function renderBoards(dom, game, opts = {}) {
   const {
     chooserIdx = null,
@@ -488,6 +489,7 @@ function renderBoards(dom, game, opts = {}) {
     highlight = new Set(),
     selected = new Set(),
     onCellClick = null,
+    onCellPointerDown = null,
     onColumnClick = null,
     onColorClick = null,
     onJokerClick = null,
@@ -514,7 +516,7 @@ function renderBoards(dom, game, opts = {}) {
     // Punkten neben dem Joker). Im PvP/Notizblock gibt es nur EINEN Block -> kein Name.
     const ident = game.relaxed ? {} : { playerName: `${p.name}${p.isHuman ? '' : ' (KI)'}` };
     const sheetOptions = p.id === focusIdx
-      ? { ...ident, interactive, highlight, selected, onCellClick, onColumnClick, onColorClick, onJokerClick }
+      ? { ...ident, interactive, highlight, selected, onCellClick, onCellPointerDown, onColumnClick, onColorClick, onJokerClick }
       : ident;
     card.appendChild(renderSheet(p.sheet, sheetOptions));
     dom.boardContainer.appendChild(card);

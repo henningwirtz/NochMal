@@ -63,6 +63,7 @@ if (saved) {
   if (saved.timerSeconds) $('timer-seconds').value = String(saved.timerSeconds);
   if (saved.jokerSix) $('rule-joker-six').checked = true;
   if (saved.passPenalty) $('rule-pass-penalty').checked = true;
+  if (saved.starPenaltyHigh) $('rule-star-penalty').checked = true;
   if (saved.mode === 'b') currentMode = 'b';
   // Block-Auswahl nur uebernehmen, wenn die id noch in der Registry existiert.
   if (saved.boardId && BOARDS.some((b) => b.id === saved.boardId)) currentBoardId = saved.boardId;
@@ -331,6 +332,7 @@ startBtn.addEventListener('click', () => {
   // Zusatzregeln (Hausregeln) - gelten in beiden Modi.
   const jokerSix = $('rule-joker-six').checked;
   const passPenalty = $('rule-pass-penalty').checked;
+  const starPenaltyHigh = $('rule-star-penalty').checked;
 
   let configs, count, soloMode, moveTimer, relaxed;
   if (notepad) {
@@ -365,11 +367,12 @@ startBtn.addEventListener('click', () => {
     timerSeconds,
     jokerSix,
     passPenalty,
+    starPenaltyHigh,
     boardId: currentBoardId,
     slots: slots.map((s) => ({ name: s.name, isHuman: s.isHuman })),
   });
 
-  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed, relaxed, aiAuto, jokerSix, passPenalty });
+  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed, relaxed, aiAuto, jokerSix, passPenalty, starPenaltyHigh });
 
   $('setup-screen').classList.add('hidden');
   dom.endPanel.classList.add('hidden');

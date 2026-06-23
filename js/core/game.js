@@ -21,13 +21,15 @@ import {
   GRID_COLS,
   MAX_PER_TURN,
   PASS_PENALTY,
+  STAR_PENALTY,
+  STAR_PENALTY_HIGH,
 } from './constants.js';
 import { rollAll } from './dice.js';
 import { Sheet } from './sheet.js';
 import { isValidPlacement, isRelaxedPlacement } from './rules.js';
 
 export class Game {
-  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1, relaxed = false, aiAuto = false, jokerSix = false, passPenalty = false } = {}) {
+  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1, relaxed = false, aiAuto = false, jokerSix = false, passPenalty = false, starPenaltyHigh = false } = {}) {
     // playerConfigs: [{ name, isHuman }]
     this.players = playerConfigs.map((p, i) => ({
       id: i,
@@ -43,10 +45,14 @@ export class Game {
     this.aiAuto = aiAuto;       // true = KI-Phasen ohne Bestätigungsklick automatisch starten
 
     // Optionale Hausregeln.
-    this.jokerSix = jokerSix;       // Zahlenjoker darf auch 6 Felder ankreuzen
-    this.passPenalty = passPenalty; // jedes Passen kostet 1 Minuspunkt
-    // Pass-Strafe je Blatt hinterlegen, damit computeScore() parameterlos bleibt.
-    for (const p of this.players) p.sheet.passPenalty = passPenalty ? PASS_PENALTY : 0;
+    this.jokerSix = jokerSix;             // Zahlenjoker darf auch 6 Felder ankreuzen
+    this.passPenalty = passPenalty;       // jedes Passen kostet 1 Minuspunkt
+    this.starPenaltyHigh = starPenaltyHigh; // nicht angekreuzte Sterne kosten -3 statt -2
+    // Strafen je Blatt hinterlegen, damit computeScore() parameterlos bleibt.
+    for (const p of this.players) {
+      p.sheet.passPenalty = passPenalty ? PASS_PENALTY : 0;
+      p.sheet.starPenalty = starPenaltyHigh ? STAR_PENALTY_HIGH : STAR_PENALTY;
+    }
     this.activeIndex = 0;
     this.rollCount = 0;
 

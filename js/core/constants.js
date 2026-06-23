@@ -67,6 +67,7 @@ export const STAR_PENALTY = 2;       // je nicht angekreuztem Stern
 
 // Optionale Hausregeln.
 export const PASS_PENALTY = 1;       // Minuspunkt je Pass (nur wenn Regel aktiv)
+export const STAR_PENALTY_HIGH = 3;  // Hausregel: strenge Sternstrafe
 
 // Sonderregeln.
 export const FREE_ROLLS = 3; // erste 3 Wuerfe: alle duerfen aus allen 6 Wuerfeln waehlen

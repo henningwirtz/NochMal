@@ -30,6 +30,14 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       selected: [], // [[r,c],...]
     };
 
+    // Drag/Wisch-Zustand: Felder per Ziehen auswählen statt einzeln antippen.
+    let dragActive = false;
+    const dragSeen = new Set();
+    let suppressNextClick = false;  // blockiert den click-Event am Ende eines Drags
+    let currentHighlight = new Set(); // zuletzt berechnetes Highlight-Set (für Drag-Validierung)
+    let onPointerMove = null;       // wird nach redraw() gesetzt und in finish() entfernt
+    let onPointerUp = null;
+
     const colorDieById = (id) => game.dice.colorDice.find((d) => d.id === id);
     const numberDieById = (id) => game.dice.numberDice.find((d) => d.id === id);
 
@@ -86,6 +94,8 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
     }
 
     function finish(result) {
+      if (onPointerMove) dom.boardContainer.removeEventListener('pointermove', onPointerMove);
+      if (onPointerUp) document.removeEventListener('pointerup', onPointerUp);
       stopTimer();
       control.cancel = null;
       dom.diceTray.replaceChildren();
@@ -122,6 +132,8 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
     }
 
     function onCellClick(r, c) {
+      // Nach einem Drag den abschließenden click-Event ignorieren.
+      if (suppressNextClick) { suppressNextClick = false; return; }
       // Notizblock-Modus: Farbe/Anzahl egal - jedes erreichbare Feld frei ankreuzen.
       if (game.relaxed) {
         const k = key(r, c);
@@ -190,6 +202,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
           if (isRelaxedPlacement(sheet, [...state.selected, [r, c]], relaxedMax)) highlight.add(key(r, c));
         }
       }
+      currentHighlight = highlight;
       renderBoards({
         chooserIdx: playerIndex,
         focusIdx: playerIndex,
@@ -197,6 +210,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
         highlight,
         selected: selectedSet,
         onCellClick,
+        onCellPointerDown,
         // PvP: Buchstabe/Farbe antippen = "anderer Spieler war zuerst" -> nur reduziert.
         // Erneutes Antippen gibt den vollen Wert wieder frei (Umschalter).
         onColumnClick: (col) => { game.toggleColumnStrikeByOther(playerIndex, col); redraw(); },
@@ -283,6 +297,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
           if (!selectedSet.has(k)) highlight.add(k);
         }
       }
+      currentHighlight = highlight;
       renderBoards({
         chooserIdx: playerIndex,
         focusIdx: playerIndex,
@@ -290,6 +305,7 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
         highlight,
         selected: selectedSet,
         onCellClick,
+        onCellPointerDown,
       });
 
       // --- Aktionsleiste ----------------------------------------------------
@@ -332,6 +348,32 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       // Hinweis, wenn Kombination unmoeglich.
       if (state.colorId && state.numberId && placements.length === 0) {
         setHint('Mit dieser Kombination ist keine gültige Platzierung möglich.');
+      }
+    }
+
+    // --- Drag/Wisch-Mechanismus ---------------------------------------------
+    // Startet den Drag auf dem ersten Feld; die eigentliche Auswahl übernimmt click().
+    function onCellPointerDown(r, c) {
+      dragActive = true;
+      dragSeen.clear();
+      dragSeen.add(key(r, c));
+    }
+
+    // Fügt ein Feld während des Drags zur Auswahl hinzu (nur hinzufügen, nie entfernen).
+    function onCellEnterDrag(r, c) {
+      if (game.relaxed) {
+        if (sheet.isMarked(r, c)) return;
+        if (state.selected.some(([sr, sc]) => sr === r && sc === c)) return;
+        const tentative = [...state.selected, [r, c]];
+        if (!isRelaxedPlacement(sheet, tentative, relaxedMax)) return;
+        state.selected.push([r, c]);
+        redraw();
+      } else {
+        const k = key(r, c);
+        if (!currentHighlight.has(k)) return;
+        if (state.selected.some(([sr, sc]) => sr === r && sc === c)) return;
+        state.selected.push([r, c]);
+        redraw();
       }
     }
 
@@ -396,6 +438,29 @@ export function humanTurn(game, playerIndex, dom, renderBoards, control = {}) {
       return chip;
     }
     redraw();
+
+    // Drag/Wisch: pointermove auf dem Board-Container verfolgt den Finger/Cursor
+    // und fügt jedes neue, gültige Feld automatisch zur Auswahl hinzu.
+    onPointerMove = (e) => {
+      if (!dragActive) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const cellEl = el?.closest('[data-r]');
+      if (!cellEl) return;
+      const r = +cellEl.dataset.r;
+      const c = +cellEl.dataset.c;
+      const k = key(r, c);
+      if (dragSeen.has(k)) return;
+      dragSeen.add(k);
+      onCellEnterDrag(r, c);
+    };
+    onPointerUp = () => {
+      // War der Drag über mehr als ein Feld, den abschließenden click-Event unterdrücken.
+      if (dragActive && dragSeen.size > 1) suppressNextClick = true;
+      dragActive = false;
+    };
+    dom.boardContainer.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+
     startTimer();
   });
 }

@@ -23,12 +23,14 @@ import { GRID, hasStar } from '../data/board.js';
 const cellKey = (r, c) => `${r},${c}`;
 
 // options: { interactive, highlight:Set, selected:Set, onCellClick(r,c),
-//            onColumnClick(col), onColorClick(color) }
+//            onCellPointerDown(r,c), onColumnClick(col), onColorClick(color) }
+// onCellPointerDown wird von controls.js für die Drag/Wisch-Auswahl genutzt.
 // onColumnClick/onColorClick werden nur im PvP/Notizblock gesetzt (Buchstaben/Boni
 // anklickbar: "anderer Spieler war zuerst" -> nur reduzierte Punkte).
 export function renderSheet(sheet, options = {}) {
   const {
     interactive = false, highlight = new Set(), selected = new Set(), onCellClick,
+    onCellPointerDown = null,
     onColumnClick = null, onColorClick = null, onJokerClick = null,
     playerName = null,
   } = options;
@@ -83,7 +85,12 @@ export function renderSheet(sheet, options = {}) {
       if (selected.has(k)) cell.classList.add('selected');
 
       if (interactive && onCellClick) {
+        cell.dataset.r = r;
+        cell.dataset.c = c;
         cell.addEventListener('click', () => onCellClick(r, c));
+        if (onCellPointerDown) {
+          cell.addEventListener('pointerdown', () => onCellPointerDown(r, c));
+        }
       }
       gridArea.appendChild(cell);
     }

@@ -27,6 +27,9 @@ export class Sheet {
     this.passes = 0;
     this.passPenalty = 0;
 
+    // Hausregel "Strengere Sternstrafe": Game setzt die Rate je Blatt (2 oder 3).
+    this.starPenalty = STAR_PENALTY;
+
     // Wertung: pro Spalte der diesem Spieler gutgeschriebene Wert (oder null).
     this.columnAward = Array(GRID_COLS).fill(null);
     // Spalten, bei denen der obere Wert bereits von einem anderen vergeben ist.
@@ -175,7 +178,7 @@ export class Sheet {
     const jokersRemaining = this.jokersRemaining();
     const jokerBonus = jokersRemaining * UNUSED_JOKER_BONUS;
     const uncrossedStars = this.uncrossedStars();
-    const starPenalty = uncrossedStars * STAR_PENALTY;
+    const starPenalty = uncrossedStars * this.starPenalty;
     const passPenalty = this.passes * this.passPenalty;
     const total = bonus + columns + jokerBonus - starPenalty - passPenalty;
     return {
