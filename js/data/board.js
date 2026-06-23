@@ -42,13 +42,13 @@ const STANDARD_RAW = [
   'yybbbbryyynnnoo',
 ];
 
-// Sternpositionen [Zeile, Spalte] - vom Originalblock uebernommen (14 Sterne).
+// Sternpositionen [Zeile, Spalte] - vom Originalblock uebernommen (15 Sterne).
 const STANDARD_STARS = [
   [0, 7], [0, 11],
   [1, 2], [1, 4], [1, 9],
   [2, 0], [2, 6],
   [3, 5], [3, 13],
-  [5, 1], [5, 3], [5, 8], [5, 10],
+  [5, 1], [5, 3], [5, 8], [5, 10], [5, 14],
   [6, 12],
 ];
 
@@ -66,22 +66,22 @@ const STANDARD_STARS = [
 // --- Pink (aus dem sauberen Schmidt-Foto) ------------------------------------
 //          ABCDEFGHIJKLMNO
 const PINK_RAW = [
-  'nnooorbrbbbbbbr',
-  'roornnnyyynonoo',
-  'rbbnnnnyorrbboy',
-  'brrnoobbnnyyorr',
-  'boooorbbooorrrb',
-  'robrrrrnoorbbro',
-  'yyoooornyyynnoo',
+  'nnooorrrybbbbbr',
+  'rooynnbyyynooor',
+  'bbbrnnbyrrronoo',
+  'bbrrrnnoorynnnn',
+  'brrbbbobboyyyyb',
+  'oynnboonbooyrry',
+  'yyynyyynnnorrry',
 ];
 const PINK_STARS = [
-  [0, 4], [0, 8],
-  [1, 6], [1, 13],
-  [2, 0], [2, 9],
-  [3, 0], [3, 5], [3, 13],
+  [0, 1], [0, 4], [0, 8],
+  [1, 5], [1, 10], [1, 13],
+  [2, 0], [2, 3], [2, 6],
+  [3, 7], [3, 9],
   [4, 14],
-  [5, 1], [5, 13],
-  [6, 2], [6, 13],
+  [5, 11], [5, 12],
+  [6, 2],
 ];
 
 // --- Grün (grobes Geruest aus dem unscharfen Sammelbild - zu korrigieren) -----
