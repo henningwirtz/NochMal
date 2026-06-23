@@ -243,6 +243,61 @@ body.mode-notepad .dice-group { flex-wrap: wrap; }
   100% { transform: translateY(0)    rotate(-12deg); }
 }
 
+/* ---------- Start-Animation (Würfel-Splash) ---------- */
+/* Kurzes Vollbild-Overlay beim Spielstart: bunte Würfel purzeln herein, das Logo
+   springt, dann blendet alles weg (rein dekorativ, liegt über dem fertigen Spiel). */
+.start-splash {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 26px;
+  background: radial-gradient(circle at 50% 42%, #1c2c40 0%, var(--bg) 70%);
+  /* Gesamte Fläche blendet am Ende weg und gibt das Spiel frei. */
+  animation: splashOut 0.35s ease-in 0.95s forwards;
+}
+.splash-dice { display: flex; gap: 14px; }
+.splash-die {
+  width: 64px; height: 64px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0; /* Würfel-Emoji ausblenden, nur die farbige Kachel zeigen */
+  box-shadow: 0 6px 14px #0008, inset 0 0 0 3px #ffffff44;
+  /* purzelt von oben herein und wackelt kurz nach. */
+  animation: splashDieIn 0.55s cubic-bezier(.18,.9,.32,1.4) both;
+}
+.splash-die.c-y { background: #f5d11e; }
+.splash-die.c-n { background: #7cc043; }
+.splash-die.c-b { background: #3cb4e6; }
+.splash-die.c-r { background: #e6357f; }
+.splash-die.c-o { background: #f08a1d; }
+.splash-die:nth-child(1) { animation-delay: 0s; }
+.splash-die:nth-child(2) { animation-delay: 0.08s; }
+.splash-die:nth-child(3) { animation-delay: 0.16s; }
+.splash-die:nth-child(4) { animation-delay: 0.24s; }
+.splash-die:nth-child(5) { animation-delay: 0.32s; }
+.splash-logo {
+  font-size: 3.4rem; font-weight: 900; letter-spacing: 1px;
+  color: var(--accent); text-shadow: 3px 3px 0 #b85e00;
+  animation: splashLogoPop 0.6s cubic-bezier(.2,.8,.3,1.5) 0.3s both;
+}
+@keyframes splashDieIn {
+  0%   { transform: translateY(-130%) rotate(-160deg); opacity: 0; }
+  60%  { transform: translateY(12%)   rotate(10deg);   opacity: 1; }
+  80%  { transform: translateY(-4%)   rotate(-6deg); }
+  100% { transform: translateY(0)     rotate(0deg); }
+}
+@keyframes splashLogoPop {
+  0%   { transform: scale(0);   opacity: 0; }
+  65%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes splashOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+/* Bewegungsempfindliche Nutzer: kein Splash, Spiel startet sofort. */
+@media (prefers-reduced-motion: reduce) {
+  .start-splash { display: none; }
+}
+
 /* ---------- Action bar / message ---------- */
 .action-bar { display: flex; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
 .action-bar button {

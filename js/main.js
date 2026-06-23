@@ -7,7 +7,7 @@ import { Game } from './core/game.js';
 import { runGame } from './ui/flow.js';
 import { validateBoard, BOARDS, setActiveBoard } from './data/board.js';
 import { getScores, clearScores, removeScoreAt, loadSettings, saveSettings, loadPrefs, savePrefs, SCORES_KEY } from './ui/storage.js';
-import { setMuted } from './ui/sound.js';
+import { setMuted, playRoll } from './ui/sound.js';
 import { escapeHtml } from './ui/util.js';
 
 // Spielplan beim Laden validieren (wirft bei Inkonsistenzen).
@@ -395,4 +395,20 @@ startBtn.addEventListener('click', () => {
   dom.log.replaceChildren();
 
   runGame(game, dom);
+  playStartSplash();
 });
+
+// Kurzes Würfel-Splash beim Spielstart (rein dekorativ). Liegt per position:fixed
+// über dem schon aufgebauten Spiel und blendet nach der Animation weg.
+function playStartSplash() {
+  // Bewegungsempfindliche Nutzer: gar nicht einblenden, Spiel ist sofort da.
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const splash = $('start-splash');
+  if (!splash) return;
+  splash.classList.remove('hidden');
+  // Reflow erzwingen, damit die CSS-Animationen bei erneutem Start neu anlaufen.
+  void splash.offsetWidth;
+  playRoll(); // kurzer Würfel-Sound (respektiert den Mute-Schalter automatisch)
+  // Nach dem Weg-Blenden (splashOut endet ~1,3 s) wieder verstecken.
+  setTimeout(() => splash.classList.add('hidden'), 1400);
+}
