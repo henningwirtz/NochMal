@@ -168,6 +168,12 @@ button.big { font-size: 1.1rem; padding: 12px 24px; margin-top: 10px; }
 .rules-modal-box .check small { color: var(--muted); line-height: 1.35; }
 .rules-modal-box .primary { margin-top: 4px; padding: 11px 16px; font-size: 1rem; }
 
+/* Tutorial-Menue (#help-modal): linksbuendige Erklaertexte */
+.help-box { text-align: left; gap: 10px; }
+.help-box h4 { margin: 6px 0 2px; font-size: 1rem; }
+.help-box p, .help-box ul { margin: 0; color: var(--muted); line-height: 1.4; font-size: 0.92rem; }
+.help-box ul { padding-left: 18px; }
+
 /* ---------- Game header ---------- */
 .game-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .status-bar { font-size: 1.1rem; font-weight: 700; }
@@ -815,7 +821,7 @@ body.mode-notepad .totals { margin-top: 0; }
   .icon-btn { width: 30px; height: 30px; font-size: 0.85rem; }
   .end-game-btn {
     grid-area: ctl; align-self: start; justify-self: start;
-    width: calc(100% - 72px);   /* rechts daneben ist Platz für die 2 Icons (2×30 + Lücke) */
+    width: calc(100% - 108px);   /* rechts daneben ist Platz für die 3 Icons (3×30 + 2×Lücke) */
     height: 30px; margin: 0; padding: 0 6px;
     font-size: 0.72rem; line-height: 1; text-align: center;
   }

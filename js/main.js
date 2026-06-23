@@ -322,6 +322,17 @@ $('block-modal').addEventListener('click', (e) => {
   if (e.target.id === 'block-modal') $('block-modal').classList.add('hidden');
 });
 
+// Tutorial / Spielregeln (i-Symbol oben rechts) - reines Anzeigen, kein State
+$('help-toggle').addEventListener('click', () => {
+  $('help-modal').classList.remove('hidden');
+});
+$('help-done-btn').addEventListener('click', () => {
+  $('help-modal').classList.add('hidden');
+});
+$('help-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'help-modal') $('help-modal').classList.add('hidden');
+});
+
 startBtn.addEventListener('click', () => {
   const notepad = currentMode === 'b';
   const aiDifficulty = $('ai-difficulty').value;

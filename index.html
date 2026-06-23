@@ -30,6 +30,7 @@
   <div id="top-controls">
     <button id="theme-toggle" class="icon-btn" title="Hell/Dunkel umschalten" aria-label="Hell/Dunkel umschalten">🌙</button>
     <button id="mute-toggle" class="icon-btn" title="Ton an/aus" aria-label="Ton an/aus">🔊</button>
+    <button id="help-toggle" class="icon-btn" title="Spielregeln / Tutorial" aria-label="Spielregeln anzeigen">ℹ️</button>
   </div>
 
   <!-- ===================== Setup ===================== -->
@@ -183,6 +184,63 @@
       <h3>Block auswählen</h3>
       <div id="block-options" class="block-options"></div>
       <button type="button" id="block-done-btn" class="primary">Fertig</button>
+    </div>
+  </div>
+
+  <!-- Tutorial / Spielregeln: eigenes Overlay-Menü (Optik wie die Zusätzlichen Regeln) -->
+  <div id="help-modal" class="rules-modal hidden">
+    <div class="rules-modal-box help-box">
+      <h3>So wird gespielt</h3>
+
+      <h4>🎯 Ziel</h4>
+      <p>Sammle möglichst viele Punkte, indem du Felder auf deinem Block ankreuzt.
+        Das Spiel endet, sobald ein Spieler <strong>2 Farben komplett</strong> hat
+        oder <strong>alle Spalten</strong> geschlossen sind.</p>
+
+      <h4>🎲 Würfeln</h4>
+      <p>Es gibt 3 Farb- und 3 Zahlenwürfel. Der aktive Spieler wählt
+        <strong>einen Farb- und einen Zahlenwürfel</strong>. Die Mitspieler dürfen
+        nur aus den <strong>übrigen</strong> Würfeln nehmen.</p>
+
+      <h4>✏️ Ankreuzen</h4>
+      <p>Kreuze zusammenhängende Felder <strong>einer</strong> Farbe an – so viele,
+        wie der Zahlenwürfel zeigt. Dein erstes Kreuz einer Farbe muss in der
+        <strong>Mittelspalte (H)</strong> liegen oder direkt neben einem schon
+        angekreuzten Feld.</p>
+
+      <h4>❓ Joker („?" und „!")</h4>
+      <p>Der <strong>Zahlenjoker („?")</strong> erlaubt eine frei wählbare Anzahl
+        (1–5 Felder). Der <strong>Farbjoker („!")</strong> erlaubt eine frei
+        wählbare Farbe. Jeder genutzte Joker zählt am Ende weniger Bonus.</p>
+
+      <h4>⭐ Sterne</h4>
+      <p>Nicht angekreuzte Sternfelder geben am Spielende <strong>Minuspunkte</strong>.
+        Versuche also, die Sterne mitzunehmen.</p>
+
+      <h4>🏁 Spalten &amp; Farb-Bonus</h4>
+      <p>Wer eine <strong>Spalte</strong> oder eine <strong>komplette Farbe</strong>
+        als Erster abschließt, bekommt den vollen Bonus – wer später dran ist, nur
+        den reduzierten Wert.</p>
+
+      <h4>🧮 Wertung &amp; Spielende</h4>
+      <p>Am Ende werden Farb-Bonus, Spaltenwerte und übrige Joker zusammengezählt und
+        Minuspunkte für offene Sterne abgezogen. Die Endwertung erscheint direkt über
+        den Blöcken; alle Ergebnisse landen in der Bestenliste.</p>
+
+      <h4>👥 Modi</h4>
+      <p><strong>KI:</strong> an einem Gerät gegen die Bots (Kamuran, „mittel",
+        Leopold). <strong>PvP / Notizblock:</strong> jeder spielt am eigenen Handy,
+        die App dient nur als digitaler Block.</p>
+
+      <h4>📱 Bedienung</h4>
+      <p>Felder antippen <strong>oder mit dem Finger darüber wischen</strong>, um
+        mehrere auf einmal zu wählen. „↶ Feld zurück" wählt einzelne Felder wieder ab,
+        „↩ Zug zurück" nimmt den letzten Zug zurück. Gewürfelt wird per Würfeln-Knopf.</p>
+
+      <p>Tipp: Zusätzliche Hausregeln findest du im Startbildschirm unter
+        „⚙️ Zusätzliche Regeln".</p>
+
+      <button type="button" id="help-done-btn" class="primary">Verstanden</button>
     </div>
   </div>
 

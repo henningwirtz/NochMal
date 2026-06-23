@@ -226,6 +226,16 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   rendert die Bestenliste, stellt zuletzt genutzte Einstellungen wieder her, steuert
   Hell/Dunkel-Theme + Ton (oben rechts) und registriert den Service Worker.
   `index.html`, `css/styles.css`.
+  **Tutorial-/Info-Menü** (`#help-toggle`, das „ℹ️"-Icon in `#top-controls` neben
+  Theme/Ton): öffnet ein Overlay-Menü `#help-modal` (gleiche Optik/Klassen wie
+  `#rules-modal` – `.rules-modal`/`.rules-modal-box`, zusätzlich `.help-box` für
+  linksbündige Erklärtexte), das die Grundregeln in einfacher Sprache erklärt (Ziel,
+  Würfeln, Ankreuzen, Joker, Sterne, Spalten/Bonus, Wertung, Modi, Bedienung).
+  Reines Anzeigen, kein State: in `main.js` wie `#rules-modal` verdrahtet (öffnen,
+  „Verstanden" `#help-done-btn`, Klick auf den dunklen Rand schließt). Weil das Icon
+  in `#top-controls` liegt (das im Querformat per JS in die `.game-header` wandert),
+  ist die Hilfe im Setup UND im Spiel erreichbar; dafür lässt „Spiel beenden" im
+  Querformat rechts Platz für jetzt DREI Icons (`width: calc(100% - 108px)`).
 - PWA: `manifest.json` (Metadaten/Icons), `sw.js` (Service Worker, **Network-first**:
   online frisch, offline aus Cache; `CACHE`-Name wird aus `version.js`
   (`self.APP_VERSION`) abgeleitet, also nur dort die Version hochzählen),
