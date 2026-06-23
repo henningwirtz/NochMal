@@ -84,46 +84,46 @@ const PINK_STARS = [
   [6, 2],
 ];
 
-// --- Grün (grobes Geruest aus dem unscharfen Sammelbild - zu korrigieren) -----
+// --- Grün (aus den echten Feld-/Sterndaten feldgenau uebertragen, 15 Sterne) --
 //          ABCDEFGHIJKLMNO
 const GRUEN_RAW = [
-  'onnbbyrrbbynnor',
-  'yonnbbnyyobbnoo',
-  'nbboornyoorrbby',
-  'brrnnobboyyrorn',
-  'rooyrrbbnnoorbb',
-  'nbbryyrnorbbyoo',
-  'yyoobnrynnoorrn',
+  'onbbrrrnnnyyyrr',
+  'nnnnrynrnnryyry',
+  'bbonyynbrrrrooy',
+  'boooonnbbbboroo',
+  'brorbooobyooryo',
+  'rrrrbbbyyyobnnn',
+  'yyyynbyyoonnbbb',
 ];
 const GRUEN_STARS = [
-  [0, 1], [0, 9],
-  [1, 5],
-  [2, 3], [2, 12],
-  [3, 0], [3, 7],
-  [4, 4], [4, 13],
-  [5, 2], [5, 10],
-  [6, 1], [6, 8], [6, 14],
+  [0, 0], [0, 10],
+  [1, 7],
+  [2, 3], [2, 6],
+  [3, 12],
+  [4, 1], [4, 2], [4, 8], [4, 9], [4, 13], [4, 14],
+  [5, 11],
+  [6, 4], [6, 5],
 ];
 
-// --- Blau (grobes Geruest aus dem unscharfen Sammelbild - zu korrigieren) ------
+// --- Blau (aus den echten Feld-/Sterndaten feldgenau uebertragen, 15 Sterne) --
 //          ABCDEFGHIJKLMNO
 const BLAU_RAW = [
-  'bnnoyyrrnbbbyoo',
-  'ynboornnyyobbrr',
-  'rrbboonyyooynnb',
-  'nbbrrnobboyyrro',
-  'ooynrrbbnnoorbb',
-  'rbbyyornorbbyon',
-  'yyoobbnrnnoorrn',
+  'rrnnyyynnrrrroo',
+  'orrbbnynnrnyroo',
+  'boobnnnronnnnny',
+  'bbooonrroooobby',
+  'nbbrrrbbbbobyyn',
+  'nnyyrbbyyybboyb',
+  'yyyyroooryyborr',
 ];
 const BLAU_STARS = [
-  [0, 1], [0, 8],
-  [1, 5],
-  [2, 6], [2, 13],
-  [3, 0], [3, 12],
-  [4, 3],
-  [5, 1], [5, 9],
-  [6, 2], [6, 7], [6, 14],
+  [0, 6],
+  [1, 0], [1, 3], [1, 5], [1, 9], [1, 11],
+  [2, 1], [2, 13],
+  [3, 12],
+  [4, 7], [4, 10], [4, 14],
+  [5, 2],
+  [6, 4], [6, 8],
 ];
 
 export const BOARDS = [

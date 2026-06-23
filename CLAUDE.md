@@ -86,10 +86,9 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
 
 - `js/data/board.js` – **mehrere auswählbare Spielblöcke** (Bretter), je 15×7-Farbraster +
   Sternpositionen. Eine Registry `BOARDS = [{ id, name, raw, stars }, …]` hält alle Blöcke
-  (aktuell: `standard` (Default) und `pink` – beide Blöcke aus echten Schmidt-Fotos
-  feldgenau übertragen und verifiziert, je **15 Sterne** (Standard hat [5,14] als 15.
-  Stern); sowie `gruen`/`blau` – grobe Gerüste aus einem unscharfen Sammelbild, noch
-  nicht exakt 1:1; ein Block wird durch Ersetzen seiner `raw`/`stars` korrigiert). Das
+  (aktuell: `standard` (Default), `pink`, `gruen` und `blau` – ALLE vier Blöcke aus echten
+  Vorlagen feldgenau übertragen und verifiziert, je **15 Sterne** (Standard hat [5,14] als
+  15. Stern). Ein Block wird durch Ersetzen seiner `raw`/`stars` korrigiert). Das
   **aktive** Brett liefern die `export let`-Bindings `GRID`/`STARS`/`COLOR_COUNTS` und die
   Funktion `hasStar`; `setActiveBoard(id)` rechnet sie aus dem gewählten Block neu. Weil
   alle Verbraucher (`sheet`/`ai`/`rules`/`controls`/`boardView`) diese Werte erst zur
