@@ -163,8 +163,8 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   lesbaren Schritten – erst ein Denk-/Scan-Spruch (`persona.think`) mit Lesepause, dann der
   Entscheidungs-Spruch (`persona.comment`) und ERST danach das Ankreuzen; ab Normal-Tempo
   bleibt es bei EINEM (dem Entscheidungs-)Spruch ohne Extra-Pause). Welche KI redet,
-  liefert `aiPersona(difficulty)` in `flow.js`: Leopold (`'schwer'`) und Kamuran
-  (`'leicht'`, s.u.) reden, `'mittel'` schweigt (Kommentarbox bleibt leer).
+  liefert `aiPersona(difficulty)` in `flow.js`: Leopold (`'schwer'`), Kamuran
+  (`'leicht'`) und Oskar (`'mittel'`, s.u.) reden alle drei.
   **Leopold verspottet auch DEINE Züge** (`leopoldReactToHuman` in `ai.js`): nach fast
   jedem menschlichen Zug ein frecher, konkret auf den Zug bezogener Spruch. `classifyHumanMove`
   ordnet den Zug ein – `humanStrand` (du lässt einen kaum füllbaren 1er/2er-Rest liegen,
@@ -194,6 +194,26 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   „besser als der Oskar"). Statt zu spotten **bewundert** Kamuran den Menschen
   (`kamuranReactToHuman`: fragt, wie man so gut spielt / lobt überschwänglich). Verdrahtung
   wie Leopold über `aiPersona` in `flow.js` (`recentLines`-Wiederholsperre geteilt).
+  Die mittlere Stufe `mittel` heißt im Menü **„Oskar – mittel"** (nur Anzeigename,
+  intern weiter `'mittel'`; `CFG.mittel` bleibt unverändert – reine Sprech-
+  Persönlichkeit, keine Änderung der Spielstärke). Oskar ist tollpatschig-
+  **verklatscht**: er redet ständig über sein Privatleben statt übers Spiel.
+  Laufende Insider-Themen: **Dirk** (nervige Bekanntschaft, hat angeblich Oskars
+  Nummer verteilt), der **Thermo-Kurs** und **Guinness-Trinken** als Maßstab, um
+  Leute einzuschätzen, „**12 Klassiker im Ernstfall**" und „**Bachlauf unter 40**"
+  als Alltags-Angeberei, **Überstunden**-Frust und „**schwör auf Mutter**" als
+  Beteuerung. `classifyOskarMove` ordnet Oskars Zug einer Spruch-Situation zu
+  (identische Fragment-Differenz-Logik wie `classifyKamuranMove` für den `patzer`-
+  Fall, sonst `color`/`behind`/`ahead`/`star`/`joker`/`big`/`lean`/`standard`);
+  `oskarThinking`/`oskarComment` ziehen aus `LINES_O`. Anders als Leopold (Spott)
+  und Kamuran (Bewunderung) reagiert Oskar **selbstbezogen** auf den Menschen
+  (`oskarReactToHuman`): er registriert den Zug kaum und driftet meist sofort in
+  eigene Themen ab (`LINES_O.humanGossip`), reagiert auf Pässe (`humanPass`) und
+  erwähnt einen auffällig guten/großen Zug immerhin zu ~50 % beiläufig
+  (`humanNotice`), bleibt sonst zu ~40 % ganz still. Kontert gelegentlich Kamurans
+  „der Oskar"-Sticheleien (`LINES_K.general`/`LINES_K.behind`, dort unverändert
+  stehen gelassen) mit eigenen Sprüchen in `LINES_O.general`. Verdrahtet wie
+  Leopold/Kamuran über `aiPersona` in `flow.js` – ab jetzt reden alle drei Stufen.
 - `js/ui/` – Rendering & Ablauf: `boardView.js` (`renderSheet` = ein Blatt),
   `flow.js` (`runGame` = **event-gesteuerter Ablauf**: Mensch-Schritte (Würfeln, Zug)
   werden per Klick ausgelöst; `present()` ist die zentrale Weiche, die aus dem
@@ -471,14 +491,15 @@ Die Engine ist **datengetrieben** – der Spielplan steckt komplett in Daten, ni
   Schnell (0,55) · Sehr schnell (0,28). Ab `aiSpeed >= 1.5` redet Leopold zweistufig
   (s. ai.js-Eintrag, `chatty`).
 - **Kommentarbox (`#commentary`) ist Spaß-only:** sie zeigt NUR die Sprüche der
-  sprechenden KI (Leopold oder Kamuran).
+  sprechenden KI (Leopold, Kamuran oder Oskar).
   Spieltechnische Hinweise stehen dort nicht mehr – `setHint` (`controls.js`) schreibt nur
   noch in `#message`, `announce`/`present`/`presentRoll`/`presentAiPhase` (`flow.js`)
-  schreiben nicht mehr hinein bzw. leeren sie. Bei „mittel"/reinem PvP bleibt sie
-  leer (`present()` leert sie zu Beginn jedes Schritts; innerhalb einer KI-Phase läuft
+  schreiben nicht mehr hinein bzw. leeren sie. Bei reinem PvP bleibt sie leer
+  (`present()` leert sie zu Beginn jedes Schritts; innerhalb einer KI-Phase läuft
   `runAiPhase` ohne `present()`, der Text bleibt also stehen). **Ausnahme – Mensch-Zug
   mit sprechender KI im Spiel:** `applyHumanResult` zeigt dort die Reaktion auf den eigenen
-  Zug (`aiPersona(...).reactToHuman` → Leopold spottet, Kamuran bewundert, siehe oben).
+  Zug (`aiPersona(...).reactToHuman` → Leopold spottet, Kamuran bewundert, Oskar
+  quatscht selbstbezogen ab, siehe oben).
   Statuszeile (`#status-bar`) und Log (`#log`) bleiben als sachliche Info erhalten.
 - Hell/Dunkel: `body.light` überschreibt die CSS-Variablen; Theme + Mute liegen in
   `prefs` (localStorage) und werden sofort beim Umschalten gespeichert.

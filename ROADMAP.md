@@ -33,9 +33,22 @@ unten/„Erledigt" verschieben.
   `kamuranThinking`/`kamuranComment`. Er **bewundert** den Menschen statt ihn zu
   verspotten (`kamuranReactToHuman`). Verdrahtet in `flow.js` über `aiPersona`
   (Leopold/Kamuran reden, „mittel" schweigt). Tests/Sim grün.
-- **Weiterer Bot-Name & Charakter** – auch „mittel" einen eigenen Namen/Sprüche
-  geben; langfristig eigene Bots im Setup anlegbar. → `ai.js`/`flow.js`, `main.js`
-  (Setup/Namen), ggf. `js/data/bots.js`.
+- [x] **Oskar-Bot (Stufe „mittel")** – die mittlere Stufe heißt im Menü
+  „Oskar – mittel" (intern weiter `'mittel'`, `CFG.mittel` unverändert – reine
+  Sprech-Persönlichkeit, keine Spielstärken-Änderung). Tollpatschig-verklatschter
+  Charakter: redet ständig über sein Privatleben statt übers Spiel (Insider-Themen
+  Dirk, Thermo-Kurs, Guinness, „12 Klassiker im Ernstfall", „Bachlauf unter 40",
+  Überstunden-Frust, „schwör auf Mutter"). Sprüche-Pool (`LINES_O` in `ai.js`,
+  situationsabhängig via `classifyOskarMove`, identische Fragment-Logik wie
+  Kamurans `classifyKamuranMove`): `oskarThinking`/`oskarComment`. Reagiert anders
+  als Leopold/Kamuran auf den Menschen – nicht spöttisch, nicht bewundernd, sondern
+  **selbstbezogen** (`oskarReactToHuman`: meist Ablenkung auf eigene Themen, nur
+  bei auffällig gutem Zug eine beiläufige Erwähnung). Kontert gelegentlich Kamurans
+  „der Oskar"-Sticheleien (`LINES_K.general`/`LINES_K.behind`, unverändert stehen
+  gelassen). Verdrahtet in `flow.js` über `aiPersona` (jetzt reden alle drei
+  Stufen). Tests/Sim grün.
+- **Weitere Bot-Namen & Charaktere** – langfristig eigene Bots im Setup anlegbar.
+  → `ai.js`/`flow.js`, `main.js` (Setup/Namen), ggf. `js/data/bots.js`.
 - **KI-Spielzüge weiter optimieren** – z.B. flacher Lookahead, Zahlenwürfel-Denial,
   Spalten-Erstabschluss global priorisieren. → `ai.js`.
 

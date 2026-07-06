@@ -321,6 +321,8 @@ export function chooseMove(sheet, pool, difficulty = 'mittel', ctx = {}) {
     best.situation = classifyMove(sheet, best, pool, ctx);
   } else if (best && difficulty === 'leicht') {
     best.situation = classifyKamuranMove(sheet, best, ctx);
+  } else if (best && difficulty === 'mittel') {
+    best.situation = classifyOskarMove(sheet, best, ctx);
   }
   return best;
 }
@@ -784,4 +786,160 @@ export function kamuranReactToHuman(sheet, choice, humanName) {
   if (sit === 'humanGood' || sit === 'humanBig') return draw([LINES_K.humanWow], humanName);
   if (sit === 'humanMeh' && Math.random() >= 0.7) return '';
   return draw([LINES_K.humanAdmire], humanName);
+}
+
+// ============================================================================
+// Oskar-Persoenlichkeit (die mittlere KI 'mittel'). Spielt solide (CFG.mittel
+// bleibt unveraendert), redet aber tollpatschig-verklatscht: staendig ueber sein
+// Privatleben statt ueber das Spiel. Laufende Insider-Themen: Dirk (nervige
+// Bekanntschaft, hat Oskars Nummer verteilt), Thermo-Kurs und Guinness-Trinken als
+// Massstab fuer Leute, "12 Klassiker im Ernstfall" und "Bachlauf unter 40" als
+// Alltags-Angeberei, Ueberstunden-Frust, und "schwoer auf Mutter" als Beteuerung.
+// Kontert gelegentlich Kamurans "der Oskar"-Sticheleien (siehe LINES_K.general).
+// ============================================================================
+
+// Ordnet Oskars Zug einer Spruch-Situation zu - identische Logik wie bei Kamuran
+// (classifyKamuranMove), nur eigener Sprueche-Pool.
+function classifyOskarMove(sheet, move, ctx = {}) {
+  const { cells, color, count, jokersUsed = 0 } = move;
+  const fragBefore = fragmentBadness(sheet, color);
+  for (const [r, c] of cells) sheet.marks[r][c] = true;
+  const fragAfter = fragmentBadness(sheet, color);
+  const newCols = sheet.newlyCompletedColumns(cells);
+  const newColors = sheet.newlyCompletedColors(cells);
+  const star = cells.some(([r, c]) => hasStar(r, c));
+  for (const [r, c] of cells) sheet.marks[r][c] = false;
+
+  if (fragAfter - fragBefore >= 2) return 'patzer'; // kleinen Rest liegen gelassen
+  if (newCols.length || newColors.length) return 'color';
+  const diff = ctx.scoreDiff || 0;
+  if (diff <= -6) return 'behind';
+  if (diff >= 8) return 'ahead';
+  if (star) return 'star';
+  if (jokersUsed > 0) return 'joker';
+  if (count >= 4) return 'big';
+  if (count === 1) return 'lean';
+  return 'standard';
+}
+
+// Spruch-Pool fuer Oskar. {name} = Name des Fuehrenden (bei Kommentaren) bzw. des
+// Menschen (bei Reaktionen). Grundton: selbstverliebt-zerstreut, redet lieber ueber
+// Dirk/Guinness/Bachlauf/Ueberstunden als ueber den eigenen Zug.
+const LINES_O = {
+  thinkGeneric: [
+    'Warte, warte, muss kurz nachdenken … oder war das schon zu spät?',
+    'Hmm, so wie beim Bachlauf: erst mal langsam anlaufen.',
+    'Moment, ich hab grad an den Dirk gedacht. Wo war ich?',
+    'Ich guck mir das mal in Ruhe an. Ungefähr so lang wie meine Kaffeepause.',
+    'Kurz sortieren … so wie meine Steuererklärung. Dauert.',
+  ],
+  big: [
+    'Schwör auf Mutter, so einen Zug hab ich noch nie hingekriegt!',
+    'Boah, alles auf einmal! Läuft grad besser als mein Bachlauf unter 40.',
+    'Zwölf Klassiker im Ernstfall, und jetzt auch noch das hier. Läuft bei mir.',
+    'Das war jetzt fast schon ein bisschen extrem von mir, oder?',
+  ],
+  lean: [
+    'Ein Feld reicht. Muss ja nicht gleich Überstunden draus werden.',
+    'Klein, aber fein. Wie meine Frühstückspause.',
+    'Nur eins. Sicher ist sicher, sag ich immer.',
+  ],
+  joker: [
+    'Joker weg – war bestimmt ein bisschen extrem von mir.',
+    'Den heb ich mir sonst immer auf. Aber schwör auf Mutter, das musste sein.',
+    'Ups, Joker raus. Genau wie beim Dirk: einmal nicht aufgepasst, schon isses passiert.',
+  ],
+  star: [
+    'Ein Stern! Sowas erzähl ich heut noch beim Bachlauf.',
+    'Oh, ein Sternchen. Fast so schön wie ein Guinness nach Feierabend.',
+    'Stern eingesackt. Schwör auf Mutter, das musste sein.',
+  ],
+  color: [
+    'Farbe fertig! Das muss ich sofort dem Dirk erzählen.',
+    'Fertig! Läuft grad besser als meine Überstunden-Bilanz.',
+    'Komplett! Da trink ich mir gleich ein Klassiker drauf. Nur einen. Vielleicht zwölf.',
+  ],
+  ahead: [
+    'Ich lieg vorne? Schwör auf Mutter, das kommt selten vor.',
+    'Ganz vorne mit dabei – fühlt sich an wie Bachlauf unter 40.',
+    'Führe ich? Das erzähl ich beim nächsten Guinness allen.',
+  ],
+  behind: [
+    'Ich lieg hinten, aber immerhin nicht so wie der Kamuran manchmal. Sorry, Kamuran.',
+    'Macht nix, ich hol auf. Beim Bachlauf war ich auch erst Letzter.',
+    'Hinten dran, aber locker bleiben. So wie bei den Überstunden – kommt eh nicht mehr drauf an.',
+  ],
+  pass: [
+    'Das mit den Überstunden mach ich auch nicht nochmal – und diese Runde auch nicht. Ich pass.',
+    'Ich seh grad nix Gutes. So wie bei Thermo, ehrlich gesagt.',
+    'Pass. Muss auch nicht immer alles gehen, sag ich dem Dirk auch immer.',
+  ],
+  patzer: [
+    'Uups, da hab ich wohl ein Loch gelassen. Wie immer, wenn ich es eilig hab.',
+    'Das war nix. Ganz ehrlich, das war schon ein bisschen extrem daneben.',
+    'Mist, das hätt ich besser machen können. Sag aber niemandem, dass ich das zugegeben hab.',
+  ],
+  // Allgemeiner Pool inkl. Insider-Gags (Dirk, Thermo, Guinness, Klassiker,
+  // Bachlauf, Überstunden) und ein, zwei Konter Richtung Kamuran.
+  general: [
+    'Wer hat eigentlich meine Nummer beim Dirk reingemacht? Der ruft dauernd an.',
+    'Ganz netter Typ, der Dirk, aber bei Thermo hab ich den nie gesehen.',
+    'Mit dem einen aus der Abteilung trink ich jedenfalls kein Guinness mehr.',
+    'Im Ernstfall schaff ich auch zwölf Klassiker. Nur so nebenbei.',
+    'Bachlauf mach ich unter 40. Nur damit ihr wisst, mit wem ihr es zu tun habt.',
+    'Das mit den Überstunden mach ich echt nicht nochmal. Diese Woche schon zum dritten Mal gesagt.',
+    'War das gerade ein bisschen extrem von mir? Passiert.',
+    'Der Kamuran labert ja ständig über mich. Soll er ruhig, ich hab eh keine Zeit für Gerüchte. Fast keine.',
+    'Kamuran meint ja immer, er wär besser als ich. Schwör auf Mutter, der spinnt.',
+  ],
+
+  // --- Reaktionen auf DEINEN Zug. {name} = dein Name. Oskar ist selbstbezogen: ---
+  // registriert deinen Zug kaum, quatscht lieber ueber sein eigenes Leben.
+  // Auffaellig guter/grosser Zug wird wenigstens beilaeufig erwaehnt.
+  humanNotice: [
+    'Ok {name}, das war schon ein bisschen extrem. Erzähl ich dem Dirk.',
+    'Whoa, {name}. Fast so extrem wie meine zwölf Klassiker neulich.',
+    '{name}, schwör auf Mutter, das war stark. Aber jetzt zu wichtigeren Dingen: kennst du den Dirk?',
+  ],
+  // Standardfall: Oskar driftet sofort in eigene Themen ab.
+  humanGossip: [
+    'Ach {name}, schön für dich. Sag mal, hast du den Dirk auch schon mal am Hals gehabt?',
+    'Mhm, mhm. Erzähl ich später weiter, muss grad an meine Überstunden denken.',
+    'Nice, {name}. Apropos: schwör auf Mutter, du glaubst nicht, was der Dirk letztens gemacht hat.',
+    'Interessant, {name}. Ganz was anderes: warst du schon mal Guinness trinken mit jemandem, den du eigentlich nicht mochtest?',
+    '{name}, kurze Frage zwischendurch: Bachlauf unter 40, schon mal probiert?',
+  ],
+  // Du hast gepasst.
+  humanPass: [
+    'Du passt auch, {name}? Gut, dann bin ich nicht der Einzige, der grad an was anderes denkt.',
+    'Passt du, {name}? Genau wie ich bei den Überstundenanfragen neulich.',
+    'Passen kenn ich auch, {name}. Meistens bei Thermo, wenn ich ehrlich bin.',
+  ],
+};
+
+// Spruch waehrend Oskars Ueberlegen. Oft ein allgemeiner (mit Insider-Gags), sonst
+// ein tollpatschiger Denk-Spruch.
+export function oskarThinking(ctx = {}) {
+  return draw([Math.random() < 0.35 ? LINES_O.general : LINES_O.thinkGeneric], ctx.leaderName);
+}
+
+// Spruch zu Oskars gewaehltem Zug (oder 'pass'). situation kommt aus
+// classifyOskarMove. Etwa 35 % der Zeit kommt stattdessen ein allgemeiner Spruch.
+export function oskarComment(situation, leaderName) {
+  const sit = LINES_O[situation];
+  const useGeneral = !sit || Math.random() < 0.35;
+  return draw([useGeneral ? LINES_O.general : sit], leaderName);
+}
+
+// Oskars Reaktion auf den menschlichen Zug (oder '' = schweigt). Selbstbezogen statt
+// spottend/bewundernd: nimmt den Zug kaum wahr, quatscht meist ueber eigene Themen;
+// bei auffaellig gutem Zug immerhin zu ~50% eine beilaeufige Erwaehnung.
+export function oskarReactToHuman(sheet, choice, humanName) {
+  const sit = classifyHumanMove(sheet, choice);
+  if (sit === 'humanPass') return draw([LINES_O.humanPass], humanName);
+  if ((sit === 'humanGood' || sit === 'humanBig') && Math.random() < 0.5) {
+    return draw([LINES_O.humanNotice], humanName);
+  }
+  if (Math.random() >= 0.6) return ''; // meistens zu sehr mit sich selbst beschaeftigt
+  return draw([LINES_O.humanGossip], humanName);
 }

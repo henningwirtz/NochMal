@@ -19,16 +19,21 @@ import {
   chooseMove,
   leopoldThinking, leopoldComment, leopoldReactToHuman,
   kamuranThinking, kamuranComment, kamuranReactToHuman,
+  oskarThinking, oskarComment, oskarReactToHuman,
 } from '../core/ai.js';
 
-// Liefert die Sprecher-Persoenlichkeit zur eingestellten KI-Stufe (oder null bei
-// 'mittel' = stumm). Leopold ('schwer') ist fies, Kamuran ('leicht') tollpatschig.
+// Liefert die Sprecher-Persoenlichkeit zur eingestellten KI-Stufe. Leopold
+// ('schwer') ist fies, Kamuran ('leicht') tollpatschig-bewundernd, Oskar
+// ('mittel') tollpatschig-selbstbezogen/verklatscht.
 function aiPersona(difficulty) {
   if (difficulty === 'schwer') {
     return { think: leopoldThinking, comment: leopoldComment, reactToHuman: leopoldReactToHuman };
   }
   if (difficulty === 'leicht') {
     return { think: kamuranThinking, comment: kamuranComment, reactToHuman: kamuranReactToHuman };
+  }
+  if (difficulty === 'mittel') {
+    return { think: oskarThinking, comment: oskarComment, reactToHuman: oskarReactToHuman };
   }
   return null;
 }
@@ -100,10 +105,10 @@ export function runGame(game, dom) {
   // ab, bis wieder ein Mensch an der Reihe ist.
   function present() {
     currentControl = null;
-    // Die Kommentar-Box ist SPASS-ONLY (nur Leopolds Sprüche). Bei jedem neuen
-    // Schritt erst leeren - Leopold füllt sie in aiChoose wieder; bei Mensch/PvP/
-    // anderen KIs bleibt sie leer. (Innerhalb einer KI-Phase läuft runAiPhase ohne
-    // present(), Leopolds Text bleibt also stehen.)
+    // Die Kommentar-Box ist SPASS-ONLY (nur die Sprüche der sprechenden KIs
+    // Leopold/Kamuran/Oskar). Bei jedem neuen Schritt erst leeren - aiChoose füllt
+    // sie wieder; bei Mensch/PvP bleibt sie leer. (Innerhalb einer KI-Phase läuft
+    // runAiPhase ohne present(), der Text bleibt also stehen.)
     if (dom.commentary) dom.commentary.textContent = '';
     // Spielende: regulär (2 Farben / alle Spalten) oder im Solo nach 30 Würfen.
     if (game.finished ||
@@ -220,9 +225,10 @@ export function runGame(game, dom) {
 
   async function applyHumanResult(idx, player, res) {
     // Die sprechende KI reagiert auf den menschlichen Zug: Leopold ('schwer')
-    // verspottet ihn, Kamuran ('leicht') bewundert ihn. Spruch VOR dem Anwenden
-    // bestimmen, solange das Blatt noch im Vor-Zug-Zustand ist. Nur im KI-Modus
-    // (nicht PvP/Notizblock) und nur wenn eine sprechende KI mitspielt.
+    // verspottet ihn, Kamuran ('leicht') bewundert ihn, Oskar ('mittel') ist zu
+    // sehr mit sich selbst beschäftigt. Spruch VOR dem Anwenden bestimmen, solange
+    // das Blatt noch im Vor-Zug-Zustand ist. Nur im KI-Modus (nicht PvP/Notizblock)
+    // und nur wenn eine sprechende KI mitspielt.
     const persona = aiPersona(game.aiDifficulty);
     const personaInGame = persona
       && !game.relaxed && game.players.some((p) => !p.isHuman);
@@ -350,13 +356,13 @@ export function runGame(game, dom) {
   // ankreuzen. Legt vorher einen Schnappschuss für die Zurück-Taste ab.
   async function aiChoose(idx, player) {
     const spd = game.aiSpeed || 1;
-    const persona = aiPersona(game.aiDifficulty); // Leopold/Kamuran reden, 'mittel' schweigt
+    const persona = aiPersona(game.aiDifficulty); // Leopold/Kamuran/Oskar reden
     // Sprech-Rhythmus an das Tempo angepasst: bei den langsamen Stufen (Sehr
     // langsam/Langsam, spd >= 1.5) erzählt die KI in ZWEI gut lesbaren Schritten -
     // erst ein Denk-Spruch, kurze Lesepause, dann der Entscheidungs-Spruch und ERST
     // danach das Ankreuzen. Ab Normal-Tempo bleibt es bei EINEM (dem Entscheidungs-)
-    // Spruch. Die Kommentar-Box ist Spass-only - bei 'mittel'/PvP/Mensch bleibt sie
-    // leer (siehe present()).
+    // Spruch. Die Kommentar-Box ist Spass-only - bei PvP/Mensch bleibt sie leer
+    // (siehe present()).
     const chatty = persona && spd >= 1.5;
     const ctx = buildAiContext(game, idx);
     pendingSnapshot = game.snapshot();
@@ -627,7 +633,8 @@ function announce(dom, text) {
   line.className = 'log-line';
   line.textContent = text;
   dom.log.prepend(line);
-  // Bewusst NICHT in die Kommentar-Box: die ist Spass-only (nur Leopolds Sprueche).
+  // Bewusst NICHT in die Kommentar-Box: die ist Spass-only (nur die Sprueche der
+  // sprechenden KIs Leopold/Kamuran/Oskar).
   // Sachliche Ansagen stehen weiterhin im Log (#log) und ggf. in der Statuszeile.
 }
 
