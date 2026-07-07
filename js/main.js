@@ -64,6 +64,8 @@ if (saved) {
   if (saved.jokerSix) $('rule-joker-six').checked = true;
   if (saved.passPenalty) $('rule-pass-penalty').checked = true;
   if (saved.starPenaltyHigh) $('rule-star-penalty').checked = true;
+  if (saved.secretGoals) $('rule-secret-goal').checked = true;
+  if (saved.columnBet) $('rule-column-bet').checked = true;
   if (saved.mode === 'b') currentMode = 'b';
   // Block-Auswahl nur uebernehmen, wenn die id noch in der Registry existiert.
   if (saved.boardId && BOARDS.some((b) => b.id === saved.boardId)) currentBoardId = saved.boardId;
@@ -357,6 +359,8 @@ startBtn.addEventListener('click', () => {
   const jokerSix = $('rule-joker-six').checked;
   const passPenalty = $('rule-pass-penalty').checked;
   const starPenaltyHigh = $('rule-star-penalty').checked;
+  const secretGoals = $('rule-secret-goal').checked;
+  const columnBet = $('rule-column-bet').checked;
 
   let configs, count, soloMode, moveTimer, relaxed;
   if (notepad) {
@@ -392,11 +396,13 @@ startBtn.addEventListener('click', () => {
     jokerSix,
     passPenalty,
     starPenaltyHigh,
+    secretGoals,
+    columnBet,
     boardId: currentBoardId,
     slots: slots.map((s) => ({ name: s.name, isHuman: s.isHuman })),
   });
 
-  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed, relaxed, aiAuto, jokerSix, passPenalty, starPenaltyHigh });
+  const game = new Game(configs, { soloMode, aiDifficulty, moveTimer, aiSpeed, relaxed, aiAuto, jokerSix, passPenalty, starPenaltyHigh, secretGoals, columnBet });
 
   $('setup-screen').classList.add('hidden');
   dom.endPanel.classList.add('hidden');

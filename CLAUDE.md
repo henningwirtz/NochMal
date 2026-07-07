@@ -15,13 +15,14 @@ am Handy via GitHub Pages, siehe README („Auf dem Handy spielen").
 Im Startbildschirm (zwischen Modus-Auswahl und „Spiel starten") öffnet der Knopf
 **„Zusätzliche Regeln"** (`#extra-rules-btn` in `index.html`) ein zentriertes
 **Overlay-Menü** (`#rules-modal`, Optik wie `#end-choice` – `position: fixed`, mittig,
-abgedunkelter Hintergrund) mit zwei einzeln wählbaren Ankreuzfeldern (je Titel +
+abgedunkelter Hintergrund) mit mehreren einzeln wählbaren Ankreuzfeldern (je Titel +
 Kurzbeschreibung). Schließen über „Fertig" (`#rules-done-btn`) oder Klick auf den
 dunklen Hintergrund (alles in `main.js` verdrahtet). Das frühere `<details>` (inline
 aufklappend) wurde ersetzt, weil es im Querformat unter `overflow: hidden` abgeschnitten
 wurde; das Overlay hat immer genug Platz (`max-height: 88dvh`, scrollt notfalls intern).
-Die Checkbox-IDs (`#rule-joker-six`, `#rule-pass-penalty`) sind unverändert, daher
-greifen `saveSettings/loadSettings` weiter. Beide Regeln sind frei kombinierbar und
+Die Checkbox-IDs (`#rule-joker-six`, `#rule-pass-penalty`, `#rule-star-penalty`,
+`#rule-secret-goal`, `#rule-column-bet`) sind unverändert, daher greifen
+`saveSettings/loadSettings` weiter. Alle Regeln sind frei kombinierbar und
 **gelten in beiden Modi** (KI + PvP):
 
 - **Zahlenjoker auch als 6** (`game.jokerSix`, Checkbox `#rule-joker-six`): der
@@ -39,8 +40,36 @@ greifen `saveSettings/loadSettings` weiter. Beide Regeln sind frei kombinierbar 
   Total ab (bleibt parameterlos). Hinweise für den Spieler: Passen-Knopf zeigt
   „Passen (−1)", der laufende Punktestand „· −X Pässe", die Endwertung eine Spalte
   „−Pässe"; `snapshot/restore` sichern `passes` (Zurück-Taste).
+- **Strengere Sternstrafe** (`game.starPenaltyHigh`, Checkbox `#rule-star-penalty`):
+  nicht angekreuzte Sterne kosten am Ende **−3 statt −2** Punkte. `Game` setzt dazu
+  `sheet.starPenalty` auf `STAR_PENALTY_HIGH` statt `STAR_PENALTY` (`constants.js`);
+  `computeScore()` bleibt unverändert (`uncrossedStars * this.starPenalty`).
+- **Geheimziel-Karten** (`game.secretGoals`, Checkbox `#rule-secret-goal`): jedem
+  Spieler wird bei Spielstart **zufällig** eines von acht Nebenzielen aus dem Pool
+  `GOALS` (`js/data/goals.js`, je `{id, label, bonus, check(sheet)}`) zugelost –
+  `Game` mischt den Pool (Fisher-Yates) und verteilt ihn reihum (`sheet.secretGoal`,
+  bleibt für die ganze Partie fix, kein Snapshot/Undo nötig). Beispiele: „Sternsammler"
+  (höchstens 1 offener Stern), „Jokerlos" (höchstens 1 Joker benutzt), „Randgänger"
+  (Spalte A **und** O komplett). `check(sheet)` wertet rein den eigenen Blattzustand
+  aus, unabhängig von anderen Spielern. `sheet.computeScore()` prüft `secretGoal.check`
+  und addiert bei Erfüllung `secretGoal.bonus` **on top** aufs Total. Anzeige: eigene
+  Zeile im Wertungspanel (`boardView.js`, „Ziel: … ✓ / –"), eigene Spalte „Ziel" in der
+  Endtabelle (`flow.js showEnd`, nur wenn die Regel aktiv ist).
+- **Spalten-Wette** (`game.columnBet`, Checkbox `#rule-column-bet`): jedem Spieler wird
+  bei Spielstart unabhängig eine **zufällige Spalte** zugelost (`sheet.betColumn`,
+  0–14). Schließt er genau diese Spalte ab, zählt ihr Wert **doppelt**
+  (`COLUMN_BET_MULTIPLIER = 2` in `constants.js`, angewendet direkt in
+  `sheet.awardColumn`, nicht erst in `computeScore` – so bleibt die Verdopplung auch
+  im PvP-Toggle korrekt). Dafür musste `game.toggleColumnStrikeByOther` robuster
+  werden: statt den gespeicherten Wert mit den rohen `COLUMN_TOP`/`COLUMN_BOTTOM`-
+  Konstanten zu vergleichen (die bei Verdopplung nicht mehr passen), prüft er nur noch
+  „ist die Spalte schon gewertet?" und vergibt bei Bedarf mit dem neuen Struck-Status
+  neu. `computeScore()` liefert zusätzlich `betBonus` (nur zur Anzeige – die
+  Verdopplung steckt bereits vollständig in `columns`). Anzeige: die gewettete Spalte
+  ist im Raster gold umrandet (`.col-letter.bet-col`), eigene Zeile im Wertungspanel,
+  eigene Spalte „Wette" in der Endtabelle.
 
-Beide Flags werden in `main.js` aus den Checkboxen gelesen, an `new Game(...)` übergeben
+Alle Flags werden in `main.js` aus den Checkboxen gelesen, an `new Game(...)` übergeben
 und via `saveSettings/loadSettings` gemerkt.
 
 ## Roadmap / geplante Features

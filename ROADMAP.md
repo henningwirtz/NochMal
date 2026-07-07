@@ -92,6 +92,14 @@ unten/„Erledigt" verschieben.
   Als Hausregel „Minuspunkt pro Pass" (`#rule-pass-penalty`) umgesetzt.
 - [x] **Strengere Sternstrafe** – nicht angekreuzte Sterne kosten −3 statt −2.
   Als Hausregel „Strengere Sternstrafe (−3)" (`#rule-star-penalty`) umgesetzt.
+- [x] **Geheimziel-Karten** – jedem Spieler wird zu Spielbeginn zufällig eines von
+  acht Nebenzielen zugelost (Pool `GOALS` in `js/data/goals.js`); erfüllt gibt einen
+  Bonus obendrauf. Als Hausregel „Geheimziel-Karten" (`#rule-secret-goal`,
+  `game.secretGoals`) umgesetzt.
+- [x] **Spalten-Wette** – jedem Spieler wird zu Spielbeginn zufällig eine Spalte
+  zugelost; schließt er genau diese ab, zählt ihr Wert doppelt
+  (`COLUMN_BET_MULTIPLIER`). Als Hausregel „Spalten-Wette" (`#rule-column-bet`,
+  `game.columnBet`) umgesetzt.
 
 ## UI / Darstellung
 - [x] **Quer-Modus optimieren** – Landscape-Layout, Block ohne Horizontal-Scroll.
@@ -150,6 +158,52 @@ unten/„Erledigt" verschieben.
   separater Picker, Validierung über das bestehende `highlight`-Set bzw.
   `isRelaxedPlacement`. → `boardView.js` (`data-r`/`data-c`, `onCellPointerDown`),
   `controls.js` (Drag-Zustand, `onCellEnterDrag`), `flow.js` (`renderBoards`-Durchleitung).
+
+## Ideen-Sammlung für weitere Hausregeln (noch nicht geplant)
+Gesammelte Vorschläge aus einem Brainstorming (2026-07-07), um das Spiel spannender/
+taktischer zu machen. Noch nicht umgesetzt, nicht priorisiert – bei Bedarf einzeln
+als eigenes Feature planen (siehe „Geheimziel-Karten"/„Spalten-Wette" oben als bereits
+umgesetzte Beispiele aus derselben Liste).
+
+- **Pasch-Bonus** – zeigen beide Zahlenwürfel dieselbe Zahl, darf der aktive Spieler
+  zusätzlich ein Gratis-Feld ankreuzen.
+- **Reserve-Würfel** – ein siebter, neutraler Würfel; wer sonst passen müsste, darf ihn
+  einmal pro Runde gegen einen Standardwürfel tauschen.
+- **Engeres Endspiel** – sobald ein Spieler eine Farbe komplett hat, wird ab da nur noch
+  mit 2 statt 3 Zahlenwürfeln gewürfelt.
+- **Kein Doppel-Joker** – Farb- und Zahlenjoker dürfen nicht im selben Zug kombiniert
+  werden.
+- **Joker-Cooldown** – nach Jokernutzung eine Runde aussetzen, bevor der nächste Joker
+  genutzt werden darf.
+- **Purist-Bonus** – wer eine Farbe zuerst abschließt UND dabei keinen Joker in dieser
+  Farbe benutzt hat, bekommt +2 Extrapunkte.
+- **Joker-Pflicht** – wer am Spielende noch nie einen Joker eingesetzt hat, bekommt
+  einen kleinen Punktabzug.
+- **Gestaffelte Sternstrafe** – jeder weitere offene Stern wird teurer (z. B. 1./2.
+  Stern −1, 3./4. −2, ab dem 5. −3) statt fix −2/−3 pro Stern.
+- **Farb-Stern-Bonus** – wer alle Sternfelder einer einzelnen Farbe ankreuzt, bekommt
+  einen kleinen Extra-Bonus.
+- **Fragment-Malus für Menschen** – Punktabzug am Ende für jedes isolierte 1er-/2er-Loch
+  pro Farbe (Prinzip der Leopold-KI-Bewertung `fragmentBadness`, jetzt auch für
+  menschliche Spieler).
+- **Brachland-Strafe** – Farben, die bis zur zweiten Spielhälfte gar nicht begonnen
+  wurden, geben am Ende Minuspunkte.
+- **Randfeld-Sperre** – die äußersten Spalten (A, O) dürfen erst angekreuzt werden,
+  wenn mindestens 3 Felder der Farbe Richtung Mitte schon gesetzt sind.
+- **Eskalierender Timer** – der Zug-Timer sinkt automatisch alle paar Runden
+  (z. B. −5 Sekunden alle 3 Runden).
+- **Doppel-Pass-Strafe** – wer zweimal hintereinander passen muss, verliert zusätzlich
+  seinen nächsten Jokerbonus.
+- **Team-Modus (2 gegen 2)** – Partner teilen sich am Ende den Punktestand (oder es
+  zählt nur der niedrigere Wert).
+- **Nachahmer-Zug** – einmal pro Partie den exakt gleichen Zug (Farbe + Länge) wie der
+  vorherige Spieler kopieren, unabhängig von den eigenen Würfeln.
+- **Verstärkte Verweigerung** – der aktive Spieler darf zusätzlich einen zweiten Würfel
+  für die Mitspieler sperren, kostet ihn aber einen kleinen Punktabzug.
+- **Verschärftes Solo-Ziel** – im Solo-Modus 3 Farben (statt 2) nötig, bevor die Zeit
+  (30 Würfe) abläuft.
+- **Solo gegen die Uhr** – festes Rundenlimit statt bis zum natürlichen Spielende,
+  Highscore-Charakter statt Vervollständigung.
 
 ## Ton / Sprache
 - **Niederländische Ansage** – optionale Sprachausgabe (Web Speech API, `nl-NL`), sagt

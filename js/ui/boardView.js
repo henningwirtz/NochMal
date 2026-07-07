@@ -50,6 +50,7 @@ export function renderSheet(sheet, options = {}) {
     if (c === START_COL) letter.classList.add('start-col');
     if (sheet.columnTopStruck[c]) letter.classList.add('struck');
     letter.textContent = COLUMN_LETTERS[c];
+    if (sheet.betColumn === c) letter.classList.add('bet-col');
     if (onColumnClick) {
       letter.classList.add('clickable');
       const col = c;
@@ -206,6 +207,15 @@ function renderSidePanel(sheet, onColorClick = null, onJokerClick = null, player
   const totalsWrap = document.createElement('div');
   totalsWrap.className = 'totals-wrap';
 
+  // Hausregel "Spalten-Wette": Wett-Spalte + Status (erst am Ende sicher "erfuellt").
+  const betLine = score.betColumn !== null
+    ? `<div><span>Wette: Spalte ${COLUMN_LETTERS[score.betColumn]}${score.betBonus ? ' ✓' : ''}</span><span>${score.betBonus ? '+' + score.betBonus : '×2'}</span></div>`
+    : '';
+  // Hausregel "Geheimziel-Karten": Zieltext + Status.
+  const goalLine = score.secretGoal
+    ? `<div><span>Ziel: ${score.secretGoal.label}${score.goalAchieved ? ' ✓' : ''}</span><span>${score.goalAchieved ? '+' + score.goalBonus : '–'}</span></div>`
+    : '';
+
   const totals = document.createElement('div');
   totals.className = 'totals';
   totals.innerHTML = `
@@ -213,6 +223,8 @@ function renderSidePanel(sheet, onColorClick = null, onJokerClick = null, player
     <div><span>Spalten A–O</span><span>${score.columns}</span></div>
     <div><span>Joker übrig (+1)</span><span>+${score.jokerBonus}</span></div>
     <div><span>Sterne offen (−2)</span><span>−${score.starPenalty}</span></div>
+    ${betLine}
+    ${goalLine}
     <div class="total-line"><span>TOTAL</span><span>${score.total}</span></div>
   `;
   totalsWrap.appendChild(totals);

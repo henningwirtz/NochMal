@@ -725,18 +725,24 @@ function showEnd(dom, game, solo = false) {
   }
   panel.append(head);
 
-  // Spalte "−Pässe" nur zeigen, wenn die Hausregel aktiv ist.
+  // Spalten fuer optionale Hausregeln nur zeigen, wenn aktiv.
   const showPass = !!game.passPenalty;
+  const showBet = !!game.columnBet;
+  const showGoal = !!game.secretGoals;
   const table = document.createElement('table');
   table.className = 'end-table';
   table.innerHTML = `
     <thead><tr>
-      <th>Spieler</th><th>Bonus</th><th>Spalten</th><th>+Joker</th><th>−Sterne</th>${showPass ? '<th>−Pässe</th>' : ''}<th>TOTAL</th>
+      <th>Spieler</th><th>Bonus</th><th>Spalten</th><th>+Joker</th><th>−Sterne</th>${showPass ? '<th>−Pässe</th>' : ''}${showBet ? '<th>Wette</th>' : ''}${showGoal ? '<th>Ziel</th>' : ''}<th>TOTAL</th>
     </tr></thead>`;
   const tbody = document.createElement('tbody');
   for (const r of rows) {
     const tr = document.createElement('tr');
     if (r.isWinner) tr.classList.add('winner');
+    const betCell = r.betColumn !== null ? `${COLUMN_LETTERS[r.betColumn]}: +${r.betBonus}` : '–';
+    const goalCell = r.secretGoal
+      ? `${r.goalAchieved ? '✓' : '✗'} ${escapeHtml(r.secretGoal.label)}${r.goalAchieved ? ` (+${r.goalBonus})` : ''}`
+      : '–';
     tr.innerHTML = `
       <td>${escapeHtml(r.player.name)}${r.player.isHuman ? '' : ' (KI)'}${r.isWinner ? ' 🏆' : ''}</td>
       <td>${r.bonus}</td>
@@ -744,6 +750,8 @@ function showEnd(dom, game, solo = false) {
       <td>+${r.jokerBonus}</td>
       <td>−${r.starPenalty}</td>
       ${showPass ? `<td>−${r.passPenalty}</td>` : ''}
+      ${showBet ? `<td>${betCell}</td>` : ''}
+      ${showGoal ? `<td>${goalCell}</td>` : ''}
       <td><strong>${r.total}</strong></td>`;
     tbody.append(tr);
   }

@@ -13,6 +13,7 @@ import {
   JOKER_BOXES,
   UNUSED_JOKER_BONUS,
   STAR_PENALTY,
+  COLUMN_BET_MULTIPLIER,
 } from './constants.js';
 import { GRID, COLOR_COUNTS, hasStar, STARS } from '../data/board.js';
 
@@ -39,6 +40,15 @@ export class Sheet {
     this.colorAward = {};
     // Farben, bei denen der erste (5er) Bonus bereits vergeben ist.
     this.colorFirstStruck = {};
+
+    // Hausregel "Geheimziel-Karten": zufaellig zugelostes Ziel (siehe
+    // data/goals.js), null = Regel aus. Wird von Game einmalig zu Spielbeginn
+    // gesetzt und aendert sich danach nicht mehr.
+    this.secretGoal = null;
+
+    // Hausregel "Spalten-Wette": zufaellig geloste Spalte, deren Wert sich bei
+    // Abschluss verdoppelt (awardColumn). null = Regel aus.
+    this.betColumn = null;
   }
 
   isMarked(r, c) {
@@ -94,7 +104,10 @@ export class Sheet {
   }
 
   awardColumn(col, isTop) {
-    this.columnAward[col] = isTop ? COLUMN_TOP[col] : COLUMN_BOTTOM[col];
+    let value = isTop ? COLUMN_TOP[col] : COLUMN_BOTTOM[col];
+    // Hausregel "Spalten-Wette": eigene gewettete Spalte zaehlt doppelt.
+    if (this.betColumn === col) value *= COLUMN_BET_MULTIPLIER;
+    this.columnAward[col] = value;
   }
 
   strikeColumnTop(col) {
@@ -180,7 +193,20 @@ export class Sheet {
     const uncrossedStars = this.uncrossedStars();
     const starPenalty = uncrossedStars * this.starPenalty;
     const passPenalty = this.passes * this.passPenalty;
-    const total = bonus + columns + jokerBonus - starPenalty - passPenalty;
+
+    // Hausregel "Spalten-Wette": nur zur Anzeige - der durch die Verdopplung
+    // entstandene Zusatzwert (steckt bereits vollstaendig in "columns").
+    let betBonus = 0;
+    if (this.betColumn !== null && this.columnAward[this.betColumn] !== null) {
+      betBonus = this.columnAward[this.betColumn] / COLUMN_BET_MULTIPLIER;
+    }
+
+    // Hausregel "Geheimziel-Karten": Bonus obendrauf, falls das zugeloste Ziel
+    // bis Spielende erfuellt ist.
+    const goalAchieved = !!(this.secretGoal && this.secretGoal.check(this));
+    const goalBonus = goalAchieved ? this.secretGoal.bonus : 0;
+
+    const total = bonus + columns + jokerBonus - starPenalty - passPenalty + goalBonus;
     return {
       bonus,
       columns,
@@ -190,6 +216,11 @@ export class Sheet {
       uncrossedStars,
       passPenalty,
       passes: this.passes,
+      betColumn: this.betColumn,
+      betBonus,
+      secretGoal: this.secretGoal,
+      goalAchieved,
+      goalBonus,
       total,
     };
   }

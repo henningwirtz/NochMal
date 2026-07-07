@@ -27,9 +27,10 @@ import {
 import { rollAll } from './dice.js';
 import { Sheet } from './sheet.js';
 import { isValidPlacement, isRelaxedPlacement } from './rules.js';
+import { GOALS } from '../data/goals.js';
 
 export class Game {
-  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1, relaxed = false, aiAuto = false, jokerSix = false, passPenalty = false, starPenaltyHigh = false } = {}) {
+  constructor(playerConfigs, { soloMode = false, aiDifficulty = 'mittel', moveTimer = 0, aiSpeed = 1, relaxed = false, aiAuto = false, jokerSix = false, passPenalty = false, starPenaltyHigh = false, secretGoals = false, columnBet = false } = {}) {
     // playerConfigs: [{ name, isHuman }]
     this.players = playerConfigs.map((p, i) => ({
       id: i,
@@ -48,10 +49,28 @@ export class Game {
     this.jokerSix = jokerSix;             // Zahlenjoker darf auch 6 Felder ankreuzen
     this.passPenalty = passPenalty;       // jedes Passen kostet 1 Minuspunkt
     this.starPenaltyHigh = starPenaltyHigh; // nicht angekreuzte Sterne kosten -3 statt -2
+    this.secretGoals = secretGoals;       // jedem Spieler wird ein Geheimziel zugelost
+    this.columnBet = columnBet;           // jedem Spieler wird eine Wett-Spalte zugelost
     // Strafen je Blatt hinterlegen, damit computeScore() parameterlos bleibt.
     for (const p of this.players) {
       p.sheet.passPenalty = passPenalty ? PASS_PENALTY : 0;
       p.sheet.starPenalty = starPenaltyHigh ? STAR_PENALTY_HIGH : STAR_PENALTY;
+    }
+    // Hausregel "Geheimziel-Karten": Ziele mischen, dann reihum (mit Wiederholung
+    // bei mehr Spielern als Zielen) zuteilen - jeder bekommt genau eins.
+    if (secretGoals) {
+      const pool = [...GOALS];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      this.players.forEach((p, i) => { p.sheet.secretGoal = pool[i % pool.length]; });
+    }
+    // Hausregel "Spalten-Wette": jedem Spieler unabhaengig eine Spalte zulosen.
+    if (columnBet) {
+      for (const p of this.players) {
+        p.sheet.betColumn = Math.floor(Math.random() * GRID_COLS);
+      }
     }
     this.activeIndex = 0;
     this.rollCount = 0;
@@ -249,13 +268,12 @@ export class Game {
   // vollen Oberwert wieder frei. Ein bereits gewerteter Wert wird passend umgestuft.
   toggleColumnStrikeByOther(playerIndex, col) {
     const sheet = this.players[playerIndex].sheet;
-    if (sheet.columnTopStruck[col]) {
-      sheet.unstrikeColumnTop(col);
-      if (sheet.columnAward[col] === COLUMN_BOTTOM[col]) sheet.awardColumn(col, true);
-    } else {
-      sheet.strikeColumnTop(col);
-      if (sheet.columnAward[col] === COLUMN_TOP[col]) sheet.awardColumn(col, false);
-    }
+    if (sheet.columnTopStruck[col]) sheet.unstrikeColumnTop(col);
+    else sheet.strikeColumnTop(col);
+    // War die Spalte schon gewertet, mit dem neuen Struck-Status neu vergeben
+    // (robust auch bei Hausregel "Spalten-Wette", die den Wert verdoppelt -
+    // ein Vergleich mit den rohen COLUMN_TOP/BOTTOM-Werten waere dann falsch).
+    if (sheet.columnAward[col] !== null) sheet.awardColumn(col, !sheet.columnTopStruck[col]);
   }
 
   // PvP: Farb-Erstbonus (5 Punkte) analog per Antippen umschalten.
